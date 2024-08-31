@@ -28,7 +28,7 @@ impl ColorStructure {
             _ => false,
         }
     }
-    pub(crate) fn rgb (&self) -> bool {
+    pub(crate) fn rgb(&self) -> bool {
         match self {
             ColorStructure::L | ColorStructure::La => false,
             ColorStructure::Rgb | ColorStructure::Rgba => true,
@@ -47,8 +47,7 @@ pub(crate) trait ColorString {
 }
 
 impl ColorString for ColorType {
-    fn color_str(&self) -> &'static str
-    {
+    fn color_str(&self) -> &'static str {
         match self {
             ColorType::L8 => "L8",
             ColorType::La8 => "La8",
@@ -60,13 +59,12 @@ impl ColorString for ColorType {
             ColorType::Rgba16 => "Rgba16",
             ColorType::Rgb32F => "Rgb32F",
             ColorType::Rgba32F => "Rgba32F",
-            _ => "Unknown"
+            _ => "Unknown",
         }
     }
 }
 impl ColorString for ColorStructure {
-    fn color_str(&self) -> &'static str
-    {
+    fn color_str(&self) -> &'static str {
         match self {
             ColorStructure::L => "L",
             ColorStructure::La => "La",

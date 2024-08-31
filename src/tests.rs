@@ -4,7 +4,10 @@ mod tests {
 
     use image::open;
 
-    use crate::{blend_ops::blend, pixelops::{pixel_add, pixel_mult, pixel_sub}};
+    use crate::{
+        blend_ops::blend,
+        pixelops::{pixel_add, pixel_mult, pixel_sub},
+    };
 
     #[test]
     fn test_add() {

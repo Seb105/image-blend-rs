@@ -6,7 +6,14 @@ authors = ["Seb Smith"]
 description = "A library adding common and custom blending modes, also known as channel operations or chops to the image crate"
 license = "MIT OR Apache-2.0"
 readme = "readme.md"
-keywords = ["image", "image-rs", "blend", "imagechops", "channel-operations", "blending-modes"]
+keywords = [
+    "image",
+    "image-rs",
+    "blend",
+    "imagechops",
+    "channel-operations",
+    "blending-modes",
+]
 
 [profile.dev]
 debug = true

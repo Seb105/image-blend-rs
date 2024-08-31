@@ -3,11 +3,11 @@
     clippy::restriction,
     clippy::pedantic,
     clippy::nursery,
-    clippy::cargo,
+    clippy::cargo
 )]
 
-mod pixelops;
-mod error;
 pub mod blend_ops;
-mod tests;
 mod enums;
+mod error;
+mod pixelops;
+mod tests;
