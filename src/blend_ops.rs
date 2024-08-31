@@ -1,9 +1,9 @@
-use std::{collections::HashMap, f32::consts::E, fmt::Debug, iter::{zip, Zip}, ops::{Add, Bound, Deref, DerefMut}, vec};
+use std::{iter::{zip, Zip}, ops::{Deref, DerefMut}, vec};
 
-use image::{flat::SampleLayout, ColorType, DynamicImage, GenericImage, GenericImageView, ImageBuffer, Pixel, PixelWithColorType, Primitive};
+use image::{GenericImageView, ImageBuffer, Pixel};
 use num_traits::{NumCast, Bounded};
 
-use crate::{error::Error, ColorString};
+use crate::{enums::{ColorString, ColorStructure}, error::Error};
 
 fn check_dims<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Result<(), Error>
 {
@@ -11,48 +11,6 @@ fn check_dims<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Res
         return Err(Error::DimensionMismatch);
     }
     Ok(())
-}
-
-
-pub enum ColorStructure {
-    L,
-    La,
-    Rgb,
-    Rgba,
-}
-impl TryFrom<SampleLayout> for ColorStructure {
-    fn try_from(colour_type: SampleLayout) -> Result<Self, Error> {
-        match colour_type.channels {
-            1 => Ok(ColorStructure::L),
-            2 => Ok(ColorStructure::La),
-            3 => Ok(ColorStructure::Rgb),
-            4 => Ok(ColorStructure::Rgba),
-            _ => Err(Error::UnsupportedType),
-        }
-    }
-
-    type Error = Error;
-}
-impl ColorStructure {
-    fn alpha(&self) -> bool {
-        match self {
-            ColorStructure::La | ColorStructure::Rgba => true,
-            _ => false,
-        }
-    }
-    fn rgb (&self) -> bool {
-        match self {
-            ColorStructure::L | ColorStructure::La => false,
-            ColorStructure::Rgb | ColorStructure::Rgba => true,
-        }
-    }
-    fn alpha_channel(&self) -> Option<usize> {
-        match self {
-            ColorStructure::La => Some(1),
-            ColorStructure::Rgba => Some(3),
-            _ => None,
-        }
-    }
 }
 
 pub fn blend<P, Pmut, Container, ContainerMut>(a: &mut ImageBuffer<Pmut, ContainerMut>, b: &ImageBuffer<P, Container>, op: fn(f64, f64) -> f64) -> Result<(), Error>
@@ -114,14 +72,4 @@ fn get_channels(structure_a: ColorStructure, structure_b: ColorStructure) -> Res
         _ => None,
     };
     Ok((colour_channels, alpha_channels))
-}
-
-pub fn pixel_add(a_f64: f64, b_f64: f64) -> f64 {
-    a_f64 + b_f64
-}
-pub fn pixel_sub(a_f64: f64, b_f64: f64) -> f64 {
-    a_f64 - b_f64
-}
-pub fn pixel_mult(a_f64: f64, b_f64: f64) -> f64 {
-    a_f64 * b_f64
 }

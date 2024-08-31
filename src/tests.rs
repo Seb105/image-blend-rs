@@ -1,11 +1,10 @@
 // Tests
 #[cfg(test)]
 mod tests {
-    use std::iter::zip;
 
     use image::open;
 
-    use crate::blend_ops::{blend, pixel_add, pixel_mult, pixel_sub};
+    use crate::{blend_ops::blend, pixelops::{pixel_add, pixel_mult, pixel_sub}};
 
     #[test]
     fn test_add() {
