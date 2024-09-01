@@ -43,10 +43,10 @@ where
     ) -> Result<(), Error>
     {
         check_dims(self, other)?;
-        let layout_a = self.sample_layout();
-        let layout_b = other.sample_layout();
+        let structure_a: ColorStructure = self.sample_layout().try_into()?;
+        let structure_b: ColorStructure = other.sample_layout().try_into()?;
 
-        let (colour_channels, alpha_channels) = get_channels(&layout_a.try_into()?, &layout_b.try_into()?)?;
+        let (colour_channels, alpha_channels) = get_channels(&structure_a, &structure_b)?;
 
         let a_max: f64 = NumCast::from(<Pmut as Pixel>::Subpixel::max_value()).unwrap();
         let b_max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
@@ -55,11 +55,15 @@ where
             zip(self.pixels_mut(), other.pixels()).for_each(|(px_a, px_b)| {
                 let channel_a = px_a.channels_mut();
                 let channel_b = px_b.channels();
+                let b_weight = match structure_b.alpha_channel() {
+                    Some(alpha_channel) => <f64 as NumCast>::from(channel_b[alpha_channel]).unwrap() / b_max,
+                    None => 1.
+                };
 
                 colour_channels.clone().for_each(|(ch_a, ch_b)| {
                     let a_f64: f64 = <f64 as NumCast>::from(channel_a[ch_a]).unwrap() / a_max;
                     let b_f64: f64 = <f64 as NumCast>::from(channel_b[ch_b]).unwrap() / b_max;
-                    let new_64: f64 =  NumCast::from(op(a_f64, b_f64)).unwrap();
+                    let new_64: f64 =  NumCast::from(op(a_f64, b_f64 * b_weight)).unwrap();
                     let new_val = NumCast::from(new_64.clamp(0., 1.0) * a_max).unwrap();
                     channel_a[ch_a] = new_val;
                 });
