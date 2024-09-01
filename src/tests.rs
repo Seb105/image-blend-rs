@@ -1,34 +1,51 @@
-
-
 // Tests
 #[cfg(test)]
-mod tests {
-
-    use std::iter::{self, zip};
-
-    use image::{open, DynamicImage};
-    use itertools::iproduct;
-    use rayon::iter::{ParallelBridge, ParallelIterator};
+mod test {
+    use std::iter;
 
     use crate::{
-        blend_ops::Blend, dynamic_blend::DynamicBlend, enums::{ColorString, ColorStructure}, pixelops::{pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter, pixel_mult, pixel_overlay, pixel_screen, pixel_soft_light, pixel_sub}
+        blend_ops::Blend,
+        dynamic_blend::DynamicBlend,
+        pixelops::{
+            pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter,
+            pixel_mult, pixel_overlay, pixel_screen, pixel_soft_light, pixel_sub,
+        }, enums::{ColorStructure, ColorString},
     };
+    use image::{open, DynamicImage};
+    use rayon::prelude::{ParallelBridge, ParallelIterator};
     fn as_all_types(img: &DynamicImage) -> impl Iterator<Item = DynamicImage> {
         iter::once(DynamicImage::ImageLuma8(img.clone().into_luma8()))
-            .chain(iter::once(DynamicImage::ImageLumaA8(img.clone().into_luma_alpha8())))
+            .chain(iter::once(DynamicImage::ImageLumaA8(
+                img.clone().into_luma_alpha8(),
+            )))
             .chain(iter::once(DynamicImage::ImageRgb8(img.clone().into_rgb8())))
-            .chain(iter::once(DynamicImage::ImageRgba8(img.clone().into_rgba8())))
-            .chain(iter::once(DynamicImage::ImageLuma16(img.clone().into_luma16())))
-            .chain(iter::once(DynamicImage::ImageLumaA16(img.clone().into_luma_alpha16())))
-            .chain(iter::once(DynamicImage::ImageRgb16(img.clone().into_rgb16())))
-            .chain(iter::once(DynamicImage::ImageRgba16(img.clone().into_rgba16())))
-            .chain(iter::once(DynamicImage::ImageRgb32F(img.clone().into_rgb32f())))
-            .chain(iter::once(DynamicImage::ImageRgba32F(img.clone().into_rgba32f())))
+            .chain(iter::once(DynamicImage::ImageRgba8(
+                img.clone().into_rgba8(),
+            )))
+            .chain(iter::once(DynamicImage::ImageLuma16(
+                img.clone().into_luma16(),
+            )))
+            .chain(iter::once(DynamicImage::ImageLumaA16(
+                img.clone().into_luma_alpha16(),
+            )))
+            .chain(iter::once(DynamicImage::ImageRgb16(
+                img.clone().into_rgb16(),
+            )))
+            .chain(iter::once(DynamicImage::ImageRgba16(
+                img.clone().into_rgba16(),
+            )))
+            .chain(iter::once(DynamicImage::ImageRgb32F(
+                img.clone().into_rgb32f(),
+            )))
+            .chain(iter::once(DynamicImage::ImageRgba32F(
+                img.clone().into_rgba32f(),
+            )))
     }
-    fn all_pixel_ops() -> Vec<(&'static str, fn(f64, f64) -> f64)> {
+    type OpVec = Vec<(&'static str, fn(f64, f64) -> f64)>;
+    fn all_pixel_ops() -> OpVec {
         vec![
-            ("add", pixel_add), 
-            ("sub", pixel_sub), 
+            ("add", pixel_add),
+            ("sub", pixel_sub),
             ("div", pixel_div),
             ("darker", pixel_darker),
             ("lighter", pixel_lighter),
@@ -64,36 +81,36 @@ mod tests {
 
         img1.save("tests_out/mult1.png").unwrap();
     }
-    // #[test]
-    // fn test_dynamic() {
-    //     let img1 = open("test_data/1.png").unwrap();
-    //     let img2 = open("test_data/2.png").unwrap();
-    //     as_all_types(&img1).into_iter().par_bridge().for_each(|a| {
-    //         let color_a = a.color().color_str();
-    //         let structure_a: ColorStructure = a.color().into();
-    //         as_all_types(&img2).into_iter().par_bridge().for_each(|b| {
-    //             let color_b = b.color().color_str();
-    //             let structure_b: ColorStructure = b.color().into();
-    //             all_pixel_ops().iter().for_each(|(op_name, op)| {
-    //                 for do_alpha in [true, false] {
-    //                     let mut a_copy = a.clone();
-    //                     let res = a_copy.blend(&b, *op, true, do_alpha);
-    //                     match res {
-    //                         Ok(_) => {
-    //                             // Convert to rgb before saving as can't save some types
-    //                             let out = DynamicImage::ImageRgba8(a_copy.into_rgba8());
-    //                             out.save(format!("tests_out/dynamic_{}_{}_{}_{}.png", op_name, color_a, color_b, do_alpha)).unwrap();
-    //                         }
-    //                         Err(e) => {
-    //                             // Should only error if a is L or La and b is Rgb or Rgba
-    //                             assert!(!structure_a.rgb() && structure_b.rgb());
-    //                         },
-    //                     }
-    //                 };
-    //             });
-    //         })
-    //     });
-    // }
+    #[test]
+    fn test_dynamic() {
+        let img1 = open("test_data/1.png").unwrap();
+        let img2 = open("test_data/2.png").unwrap();
+        as_all_types(&img1).par_bridge().for_each(|a| {
+            let color_a = a.color().color_str();
+            let structure_a: ColorStructure = a.color().into();
+            as_all_types(&img2).par_bridge().for_each(|b| {
+                let color_b = b.color().color_str();
+                let structure_b: ColorStructure = b.color().into();
+                let mut a_copy = a.clone();
+                let res = a_copy.blend(&b, pixel_mult, true, true);
+                match res {
+                    Ok(_) => {
+                        // Convert to rgb before saving as can't save some types
+                        let out = DynamicImage::ImageRgba8(a_copy.into_rgba8());
+                        out.save(format!(
+                            "tests_out/dynamic_{}_{}.png",
+                            color_a, color_b
+                        ))
+                        .unwrap();
+                    }
+                    Err(e) => {
+                        // Should only error if a is L or La and b is Rgb or Rgba
+                        assert!(!structure_a.rgb() && structure_b.rgb(), "{}", e);
+                    }
+                };
+            })
+        });
+    }
     #[test]
     fn test_ops_alpha() {
         let img1 = open("test_data/1.png").unwrap();
@@ -104,12 +121,14 @@ mod tests {
                     (true, true) => "colour_alpha",
                     (true, false) => "colour",
                     (false, true) => "alpha",
-                    (false, false) => continue
+                    (false, false) => continue,
                 };
                 for (op_name, op) in all_pixel_ops() {
                     let mut img1_copy = img1.clone();
                     img1_copy.blend(&img2, op, do_color, do_alpha).unwrap();
-                    img1_copy.save(format!("tests_out/op_{}_{}.png", op_name, blend_params)).unwrap();
+                    img1_copy
+                        .save(format!("tests_out/op_{}_{}.png", op_name, blend_params))
+                        .unwrap();
                 }
             }
         }
@@ -121,7 +140,9 @@ mod tests {
         for (op_name, op) in all_pixel_ops() {
             let mut img1_copy = img1.clone();
             img1_copy.blend(&img2, op, true, false).unwrap();
-            img1_copy.save(format!("tests_out/solid_op_{}.png", op_name)).unwrap();
+            img1_copy
+                .save(format!("tests_out/solid_op_{}.png", op_name))
+                .unwrap();
         }
     }
 }

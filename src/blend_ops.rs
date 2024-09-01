@@ -4,7 +4,7 @@ use std::{
     vec,
 };
 
-use image::{DynamicImage, GenericImageView, ImageBuffer, Pixel};
+use image::{GenericImageView, ImageBuffer, Pixel};
 use num_traits::{Bounded, NumCast};
 
 use crate::{
@@ -59,7 +59,8 @@ where
                 colour_channels.clone().for_each(|(ch_a, ch_b)| {
                     let a_f64: f64 = <f64 as NumCast>::from(channel_a[ch_a]).unwrap() / a_max;
                     let b_f64: f64 = <f64 as NumCast>::from(channel_b[ch_b]).unwrap() / b_max;
-                    let new_val = NumCast::from((op(a_f64, b_f64)).min(1.0).max(0.) * a_max).unwrap();
+                    let new_64: f64 =  NumCast::from(op(a_f64, b_f64)).unwrap();
+                    let new_val = NumCast::from(new_64.clamp(0., 1.0) * a_max).unwrap();
                     channel_a[ch_a] = new_val;
                 });
             });
@@ -72,7 +73,8 @@ where
 
                     let a_f64: f64 = <f64 as NumCast>::from(channel_a[alpha_a]).unwrap() / a_max;
                     let b_f64: f64 = <f64 as NumCast>::from(channel_b[alpha_b]).unwrap() / b_max;
-                    let new_val = NumCast::from((op(a_f64, b_f64)).min(1.0).max(0.) * a_max).unwrap();
+                    let new_64: f64 =  NumCast::from(op(a_f64, b_f64)).unwrap();
+                    let new_val = NumCast::from(new_64.clamp(0., 1.0) * a_max).unwrap();
                     channel_a[alpha_a] = new_val;
                 });
             }
@@ -82,14 +84,15 @@ where
     }
 }
 
+type ChannelIter = (
+    Zip<vec::IntoIter<usize>, vec::IntoIter<usize>>,
+    Option<(usize, usize)>,
+);
 fn get_channels(
     structure_a: ColorStructure,
     structure_b: ColorStructure,
 ) -> Result<
-    (
-        Zip<vec::IntoIter<usize>, vec::IntoIter<usize>>,
-        Option<(usize, usize)>,
-    ),
+    ChannelIter,
     Error,
 > {
     let colour_channels = match (structure_a.rgb(), structure_b.rgb()) {

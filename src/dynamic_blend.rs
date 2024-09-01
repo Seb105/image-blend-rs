@@ -1,6 +1,6 @@
-use std::ops::{Deref, DerefMut};
+use std::ops::DerefMut;
 
-use image::{imageops::colorops, ColorType, DynamicImage, ImageBuffer, Pixel};
+use image::{ColorType, DynamicImage, ImageBuffer, Pixel};
 
 use crate::{blend_ops::Blend, error::Error};
 

@@ -34,10 +34,7 @@ impl From<ColorType> for ColorStructure {
 }
 impl ColorStructure {
     pub(crate) fn alpha(&self) -> bool {
-        match self {
-            ColorStructure::La | ColorStructure::Rgba => true,
-            _ => false,
-        }
+        matches!(self, ColorStructure::La | ColorStructure::Rgba)
     }
     pub(crate) fn rgb(&self) -> bool {
         match self {
