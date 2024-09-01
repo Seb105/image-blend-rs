@@ -5,6 +5,9 @@ pub fn pixel_sub(a: f64, b: f64) -> f64 {
     a - b
 }
 pub fn pixel_div(a: f64, b: f64) -> f64 {
+    if b == 0. {
+        return 1.
+    }
     a / b
 }
 pub fn pixel_darker(a: f64, b: f64) -> f64 {
