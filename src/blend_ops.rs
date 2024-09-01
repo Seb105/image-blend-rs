@@ -59,6 +59,9 @@ where
                     Some(alpha_channel) => <f64 as NumCast>::from(channel_b[alpha_channel]).unwrap() / b_max,
                     None => 1.
                 };
+                if b_weight == 0. {
+                    return
+                };
 
                 colour_channels.clone().for_each(|(ch_a, ch_b)| {
                     let a_f64: f64 = <f64 as NumCast>::from(channel_a[ch_a]).unwrap() / a_max;

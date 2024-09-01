@@ -94,12 +94,11 @@ mod test {
                 let mut a_copy = a.clone();
                 let res = a_copy.blend(&b, pixel_mult, true, true);
                 match res {
-                    Ok(_) => {
+                    Ok(()) => {
                         // Convert to rgb before saving as can't save some types
                         let out = DynamicImage::ImageRgba8(a_copy.into_rgba8());
                         out.save(format!(
-                            "tests_out/dynamic_{}_{}.png",
-                            color_a, color_b
+                            "tests_out/dynamic_{color_a}_{color_b}.png",
                         ))
                         .unwrap();
                     }
@@ -108,7 +107,7 @@ mod test {
                         assert!(!structure_a.rgb() && structure_b.rgb(), "{}", e);
                     }
                 };
-            })
+            });
         });
     }
     #[test]
@@ -141,7 +140,25 @@ mod test {
             let mut img1_copy = img1.clone();
             img1_copy.blend(&img2, op, true, false).unwrap();
             img1_copy
-                .save(format!("tests_out/solid_op_{}.png", op_name))
+                .save(format!("tests_out/solid_op_{op_name}.png"))
+                .unwrap();
+        }
+    }
+    #[test]
+    fn test_overlay() {
+        let img1 = open("test_data/1_solid.png").unwrap();
+        let img2 = open("test_data/overlay.png").unwrap();
+        for (op_name, op) in all_pixel_ops() {
+            let mut img1_copy = img1.clone();
+            img1_copy.blend(&img2, op, true, false).unwrap();
+            img1_copy
+                .save(format!("tests_out/overlay_{op_name}_ab.png"))
+                .unwrap();
+
+            let mut img2_copy = img2.clone();
+            img2_copy.blend(&img1, op, true, false).unwrap();
+            img2_copy
+                .save(format!("tests_out/overlay_{op_name}_ba.png"))
                 .unwrap();
         }
     }
