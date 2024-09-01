@@ -127,7 +127,7 @@ mod test {
                     let mut img1_copy = img1.clone();
                     img1_copy.blend(&img2, op, do_color, do_alpha).unwrap();
                     img1_copy
-                        .save(format!("tests_out/op_{}_{}.png", op_name, blend_params))
+                        .save(format!("tests_out/op_{op_name}_{blend_params}.png"))
                         .unwrap();
                 }
             }

@@ -46,7 +46,7 @@ where
         let layout_a = self.sample_layout();
         let layout_b = other.sample_layout();
 
-        let (colour_channels, alpha_channels) = get_channels(layout_a.try_into()?, layout_b.try_into()?)?;
+        let (colour_channels, alpha_channels) = get_channels(&layout_a.try_into()?, &layout_b.try_into()?)?;
 
         let a_max: f64 = NumCast::from(<Pmut as Pixel>::Subpixel::max_value()).unwrap();
         let b_max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
@@ -89,8 +89,8 @@ type ChannelIter = (
     Option<(usize, usize)>,
 );
 fn get_channels(
-    structure_a: ColorStructure,
-    structure_b: ColorStructure,
+    structure_a: &ColorStructure,
+    structure_b: &ColorStructure,
 ) -> Result<
     ChannelIter,
     Error,
