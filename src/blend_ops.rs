@@ -4,7 +4,7 @@ use std::{
     vec,
 };
 
-use image::{GenericImageView, ImageBuffer, Pixel};
+use image::{DynamicImage, GenericImageView, ImageBuffer, Pixel};
 use num_traits::{Bounded, NumCast};
 
 use crate::{
@@ -18,12 +18,14 @@ fn check_dims<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Res
     }
     Ok(())
 }
-
-pub fn blend<P, Pmut, Container, ContainerMut>(
-    a: &mut ImageBuffer<Pmut, ContainerMut>,
-    b: &ImageBuffer<P, Container>,
-    op: fn(f64, f64) -> f64,
-) -> Result<(), Error>
+pub trait Blend<P, Container>
+where 
+    P: Pixel,
+    Container: Deref<Target = [P::Subpixel]> + AsRef<[P::Subpixel]>,
+{
+    fn blend(&mut self, other: &ImageBuffer<P, Container>, op: fn(f64, f64) -> f64, apply_to_color: bool, apply_to_alpha: bool) -> Result<(), Error>;
+}
+impl<P, Pmut, Container, ContainerMut> Blend<P, Container> for ImageBuffer<Pmut, ContainerMut>
 where
     Pmut: Pixel,
     P: Pixel,
@@ -32,43 +34,52 @@ where
         + DerefMut<Target = [Pmut::Subpixel]>
         + AsMut<[<Pmut as Pixel>::Subpixel]>,
 {
-    check_dims(a, b)?;
+    fn blend(
+        &mut self,
+        other: &ImageBuffer<P, Container>,
+        op: fn(f64, f64) -> f64,
+        apply_to_color: bool,
+        apply_to_alpha: bool,
+    ) -> Result<(), Error>
+    {
+        check_dims(self, other)?;
+        let layout_a = self.sample_layout();
+        let layout_b = other.sample_layout();
 
-    let layout_a = a.sample_layout();
-    let layout_b = b.sample_layout();
+        let (colour_channels, alpha_channels) = get_channels(layout_a.try_into()?, layout_b.try_into()?)?;
 
-    let structure_a: ColorStructure = layout_a.try_into()?;
-    let structure_b: ColorStructure = layout_b.try_into()?;
+        let a_max: f64 = NumCast::from(<Pmut as Pixel>::Subpixel::max_value()).unwrap();
+        let b_max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
 
-    let (colour_channels, alpha_channels) = get_channels(structure_a, structure_b)?;
+        if apply_to_color {
+            zip(self.pixels_mut(), other.pixels()).for_each(|(px_a, px_b)| {
+                let channel_a = px_a.channels_mut();
+                let channel_b = px_b.channels();
 
-    let a_max: f64 = NumCast::from(<Pmut as Pixel>::Subpixel::max_value()).unwrap();
-    let b_max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
+                colour_channels.clone().for_each(|(ch_a, ch_b)| {
+                    let a_f64: f64 = <f64 as NumCast>::from(channel_a[ch_a]).unwrap() / a_max;
+                    let b_f64: f64 = <f64 as NumCast>::from(channel_b[ch_b]).unwrap() / b_max;
+                    let new_val = NumCast::from((op(a_f64, b_f64)).min(1.0).max(0.) * a_max).unwrap();
+                    channel_a[ch_a] = new_val;
+                });
+            });
+        };
+        if apply_to_alpha {
+            if let Some((alpha_a, alpha_b)) = alpha_channels {
+                zip(self.pixels_mut(), other.pixels()).for_each(|(px_a, px_b)| {
+                    let channel_a = px_a.channels_mut();
+                    let channel_b = px_b.channels();
 
-    zip(a.pixels_mut(), b.pixels()).for_each(|(px_a, px_b)| {
-        let channel_a = px_a.channels_mut();
-        let channel_b = px_b.channels();
+                    let a_f64: f64 = <f64 as NumCast>::from(channel_a[alpha_a]).unwrap() / a_max;
+                    let b_f64: f64 = <f64 as NumCast>::from(channel_b[alpha_b]).unwrap() / b_max;
+                    let new_val = NumCast::from((op(a_f64, b_f64)).min(1.0).max(0.) * a_max).unwrap();
+                    channel_a[alpha_a] = new_val;
+                });
+            }
+        }
 
-        colour_channels.clone().for_each(|(ch_a, ch_b)| {
-            let a_f64: f64 = <f64 as NumCast>::from(channel_a[ch_a]).unwrap() / a_max;
-            let b_f64: f64 = <f64 as NumCast>::from(channel_b[ch_b]).unwrap() / b_max;
-            let new_val = NumCast::from((op(a_f64, b_f64)).min(1.0).max(0.) * a_max).unwrap();
-            channel_a[ch_a] = new_val;
-        });
-    });
-    if let Some((alpha_a, alpha_b)) = alpha_channels {
-        zip(a.pixels_mut(), b.pixels()).for_each(|(px_a, px_b)| {
-            let channel_a = px_a.channels_mut();
-            let channel_b = px_b.channels();
-
-            let a_f64: f64 = <f64 as NumCast>::from(channel_a[alpha_a]).unwrap() / a_max;
-            let b_f64: f64 = <f64 as NumCast>::from(channel_b[alpha_b]).unwrap() / b_max;
-            let new_val = NumCast::from((op(a_f64, b_f64)).min(1.0).max(0.) * a_max).unwrap();
-            channel_a[alpha_a] = new_val;
-        });
+        Ok(())
     }
-
-    Ok(())
 }
 
 fn get_channels(

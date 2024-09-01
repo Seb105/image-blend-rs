@@ -1,36 +1,127 @@
+
+
 // Tests
 #[cfg(test)]
 mod tests {
 
-    use image::open;
+    use std::iter::{self, zip};
+
+    use image::{open, DynamicImage};
+    use itertools::iproduct;
+    use rayon::iter::{ParallelBridge, ParallelIterator};
 
     use crate::{
-        blend_ops::blend,
-        pixelops::{pixel_add, pixel_mult, pixel_sub},
+        blend_ops::Blend, dynamic_blend::DynamicBlend, enums::{ColorString, ColorStructure}, pixelops::{pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter, pixel_mult, pixel_overlay, pixel_screen, pixel_soft_light, pixel_sub}
     };
+    fn as_all_types(img: &DynamicImage) -> impl Iterator<Item = DynamicImage> {
+        iter::once(DynamicImage::ImageLuma8(img.clone().into_luma8()))
+            .chain(iter::once(DynamicImage::ImageLumaA8(img.clone().into_luma_alpha8())))
+            .chain(iter::once(DynamicImage::ImageRgb8(img.clone().into_rgb8())))
+            .chain(iter::once(DynamicImage::ImageRgba8(img.clone().into_rgba8())))
+            .chain(iter::once(DynamicImage::ImageLuma16(img.clone().into_luma16())))
+            .chain(iter::once(DynamicImage::ImageLumaA16(img.clone().into_luma_alpha16())))
+            .chain(iter::once(DynamicImage::ImageRgb16(img.clone().into_rgb16())))
+            .chain(iter::once(DynamicImage::ImageRgba16(img.clone().into_rgba16())))
+            .chain(iter::once(DynamicImage::ImageRgb32F(img.clone().into_rgb32f())))
+            .chain(iter::once(DynamicImage::ImageRgba32F(img.clone().into_rgba32f())))
+    }
+    fn all_pixel_ops() -> Vec<(&'static str, fn(f64, f64) -> f64)> {
+        vec![
+            ("add", pixel_add), 
+            ("sub", pixel_sub), 
+            ("div", pixel_div),
+            ("darker", pixel_darker),
+            ("lighter", pixel_lighter),
+            ("diff", pixel_diff),
+            ("mult", pixel_mult),
+            ("screen", pixel_screen),
+            ("overlay", pixel_overlay),
+            ("hard_light", pixel_hard_light),
+            ("soft_light", pixel_soft_light),
+        ]
+    }
 
     #[test]
     fn test_add() {
-        let mut img1 = open("test_data/1.jpg").unwrap().into_rgba8();
-        let img2 = open("test_data/2.jpg").unwrap().into_rgba8();
-        blend(&mut img1, &img2, pixel_add).unwrap();
-
-        img1.save("test_out/add1.png").unwrap();
+        let mut img1 = open("test_data/1.png").unwrap().into_rgba8();
+        let img2 = open("test_data/2.png").unwrap().into_rgba8();
+        img1.blend(&img2, pixel_add, true, false).unwrap();
+        img1.save("tests_out/add1.png").unwrap();
     }
     #[test]
     fn test_sub() {
-        let mut img1 = open("test_data/1.jpg").unwrap().into_rgba8();
-        let img2 = open("test_data/2.jpg").unwrap().into_rgba8();
-        blend(&mut img1, &img2, pixel_sub).unwrap();
+        let mut img1 = open("test_data/1.png").unwrap().into_rgba8();
+        let img2 = open("test_data/2.png").unwrap().into_rgba8();
+        img1.blend(&img2, pixel_sub, true, false).unwrap();
 
-        img1.save("test_out/sub1.png").unwrap();
+        img1.save("tests_out/sub1.png").unwrap();
     }
     #[test]
     fn test_mult() {
-        let mut img1 = open("test_data/1.jpg").unwrap().into_rgba8();
-        let img2 = open("test_data/2.jpg").unwrap().into_rgba8();
-        blend(&mut img1, &img2, pixel_mult).unwrap();
+        let mut img1 = open("test_data/1.png").unwrap().into_rgba8();
+        let img2 = open("test_data/2.png").unwrap().into_rgba8();
+        img1.blend(&img2, pixel_mult, true, false).unwrap();
 
-        img1.save("test_out/mult1.png").unwrap();
+        img1.save("tests_out/mult1.png").unwrap();
+    }
+    // #[test]
+    // fn test_dynamic() {
+    //     let img1 = open("test_data/1.png").unwrap();
+    //     let img2 = open("test_data/2.png").unwrap();
+    //     as_all_types(&img1).into_iter().par_bridge().for_each(|a| {
+    //         let color_a = a.color().color_str();
+    //         let structure_a: ColorStructure = a.color().into();
+    //         as_all_types(&img2).into_iter().par_bridge().for_each(|b| {
+    //             let color_b = b.color().color_str();
+    //             let structure_b: ColorStructure = b.color().into();
+    //             all_pixel_ops().iter().for_each(|(op_name, op)| {
+    //                 for do_alpha in [true, false] {
+    //                     let mut a_copy = a.clone();
+    //                     let res = a_copy.blend(&b, *op, true, do_alpha);
+    //                     match res {
+    //                         Ok(_) => {
+    //                             // Convert to rgb before saving as can't save some types
+    //                             let out = DynamicImage::ImageRgba8(a_copy.into_rgba8());
+    //                             out.save(format!("tests_out/dynamic_{}_{}_{}_{}.png", op_name, color_a, color_b, do_alpha)).unwrap();
+    //                         }
+    //                         Err(e) => {
+    //                             // Should only error if a is L or La and b is Rgb or Rgba
+    //                             assert!(!structure_a.rgb() && structure_b.rgb());
+    //                         },
+    //                     }
+    //                 };
+    //             });
+    //         })
+    //     });
+    // }
+    #[test]
+    fn test_ops_alpha() {
+        let img1 = open("test_data/1.png").unwrap();
+        let img2 = open("test_data/2.png").unwrap();
+        for do_color in [true, false] {
+            for do_alpha in [true, false] {
+                let blend_params = match (do_color, do_alpha) {
+                    (true, true) => "colour_alpha",
+                    (true, false) => "colour",
+                    (false, true) => "alpha",
+                    (false, false) => continue
+                };
+                for (op_name, op) in all_pixel_ops() {
+                    let mut img1_copy = img1.clone();
+                    img1_copy.blend(&img2, op, do_color, do_alpha).unwrap();
+                    img1_copy.save(format!("tests_out/op_{}_{}.png", op_name, blend_params)).unwrap();
+                }
+            }
+        }
+    }
+    #[test]
+    fn test_ops() {
+        let img1 = open("test_data/1_solid.png").unwrap();
+        let img2 = open("test_data/2_solid.png").unwrap();
+        for (op_name, op) in all_pixel_ops() {
+            let mut img1_copy = img1.clone();
+            img1_copy.blend(&img2, op, true, false).unwrap();
+            img1_copy.save(format!("tests_out/solid_op_{}.png", op_name)).unwrap();
+        }
     }
 }

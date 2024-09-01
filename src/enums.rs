@@ -9,8 +9,8 @@ pub(crate) enum ColorStructure {
     Rgba,
 }
 impl TryFrom<SampleLayout> for ColorStructure {
-    fn try_from(colour_type: SampleLayout) -> Result<Self, Error> {
-        match colour_type.channels {
+    fn try_from(color_type: SampleLayout) -> Result<Self, Error> {
+        match color_type.channels {
             1 => Ok(ColorStructure::L),
             2 => Ok(ColorStructure::La),
             3 => Ok(ColorStructure::Rgb),
@@ -20,6 +20,17 @@ impl TryFrom<SampleLayout> for ColorStructure {
     }
 
     type Error = Error;
+}
+impl From<ColorType> for ColorStructure {
+    fn from(color_type: ColorType) -> Self {
+        match color_type {
+            ColorType::L8 | ColorType::L16 => ColorStructure::L,
+            ColorType::La8 | ColorType::La16 => ColorStructure::La,
+            ColorType::Rgb8 | ColorType::Rgb16 | ColorType::Rgb32F => ColorStructure::Rgb,
+            ColorType::Rgba8 | ColorType::Rgba16 | ColorType::Rgba32F => ColorStructure::Rgba,
+            _ => panic!()
+        }
+    }
 }
 impl ColorStructure {
     pub(crate) fn alpha(&self) -> bool {
