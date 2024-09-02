@@ -19,11 +19,17 @@ fn check_dims<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Res
     Ok(())
 }
 pub trait Blend<P, Container>
-where 
+where
     P: Pixel,
     Container: Deref<Target = [P::Subpixel]> + AsRef<[P::Subpixel]>,
 {
-    fn blend(&mut self, other: &ImageBuffer<P, Container>, op: fn(f64, f64) -> f64, apply_to_color: bool, apply_to_alpha: bool) -> Result<(), Error>;
+    fn blend(
+        &mut self,
+        other: &ImageBuffer<P, Container>,
+        op: fn(f64, f64) -> f64,
+        apply_to_color: bool,
+        apply_to_alpha: bool,
+    ) -> Result<(), Error>;
 }
 impl<P, Pmut, Container, ContainerMut> Blend<P, Container> for ImageBuffer<Pmut, ContainerMut>
 where
@@ -40,8 +46,7 @@ where
         op: fn(f64, f64) -> f64,
         apply_to_color: bool,
         apply_to_alpha: bool,
-    ) -> Result<(), Error>
-    {
+    ) -> Result<(), Error> {
         check_dims(self, other)?;
         let structure_a: ColorStructure = self.sample_layout().try_into()?;
         let structure_b: ColorStructure = other.sample_layout().try_into()?;
@@ -55,18 +60,20 @@ where
             zip(self.pixels_mut(), other.pixels()).for_each(|(px_a, px_b)| {
                 let channel_a = px_a.channels_mut();
                 let channel_b = px_b.channels();
-                let b_weight = match structure_b.alpha_channel() {
-                    Some(alpha_channel) => <f64 as NumCast>::from(channel_b[alpha_channel]).unwrap() / b_max,
-                    None => 1.
+                let alpha_weight = match structure_b.alpha_channel() {
+                    Some(alpha_channel) => {
+                        <f64 as NumCast>::from(channel_b[alpha_channel]).unwrap() / b_max
+                    }
+                    None => 1.,
                 };
-                if b_weight == 0. {
-                    return
+                if alpha_weight == 0. {
+                    return;
                 };
-
                 colour_channels.clone().for_each(|(ch_a, ch_b)| {
                     let a_f64: f64 = <f64 as NumCast>::from(channel_a[ch_a]).unwrap() / a_max;
                     let b_f64: f64 = <f64 as NumCast>::from(channel_b[ch_b]).unwrap() / b_max;
-                    let new_64: f64 =  NumCast::from(op(a_f64, b_f64 * b_weight)).unwrap();
+                    let new_64_unweighted: f64 = NumCast::from(op(a_f64, b_f64)).unwrap();
+                    let new_64 = new_64_unweighted * alpha_weight + a_f64 * (1. - alpha_weight);
                     let new_val = NumCast::from(new_64.clamp(0., 1.0) * a_max).unwrap();
                     channel_a[ch_a] = new_val;
                 });
@@ -80,7 +87,7 @@ where
 
                     let a_f64: f64 = <f64 as NumCast>::from(channel_a[alpha_a]).unwrap() / a_max;
                     let b_f64: f64 = <f64 as NumCast>::from(channel_b[alpha_b]).unwrap() / b_max;
-                    let new_64: f64 =  NumCast::from(op(a_f64, b_f64)).unwrap();
+                    let new_64: f64 = NumCast::from(op(a_f64, b_f64)).unwrap();
                     let new_val = NumCast::from(new_64.clamp(0., 1.0) * a_max).unwrap();
                     channel_a[alpha_a] = new_val;
                 });
@@ -98,10 +105,7 @@ type ChannelIter = (
 fn get_channels(
     structure_a: &ColorStructure,
     structure_b: &ColorStructure,
-) -> Result<
-    ChannelIter,
-    Error,
-> {
+) -> Result<ChannelIter, Error> {
     let colour_channels = match (structure_a.rgb(), structure_b.rgb()) {
         (true, true) => zip(vec![0usize, 1, 2], vec![0usize, 1, 2]),
         (true, false) => zip(vec![0, 1, 2], vec![0, 0, 0]),
