@@ -8,3 +8,4 @@ mod enums;
 mod error;
 pub mod pixelops;
 mod tests;
+pub mod alpha_ops;

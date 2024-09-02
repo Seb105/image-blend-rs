@@ -12,7 +12,7 @@ use crate::{
     error::Error,
 };
 
-fn check_dims<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Result<(), Error> {
+pub fn dims_match<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Result<(), Error> {
     if (a.dimensions()) != b.dimensions() {
         return Err(Error::DimensionMismatch);
     }
@@ -47,7 +47,7 @@ where
         apply_to_color: bool,
         apply_to_alpha: bool,
     ) -> Result<(), Error> {
-        check_dims(self, other)?;
+        dims_match(self, other)?;
         let structure_a: ColorStructure = self.sample_layout().try_into()?;
         let structure_b: ColorStructure = other.sample_layout().try_into()?;
 

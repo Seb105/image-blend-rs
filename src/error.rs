@@ -8,4 +8,7 @@ pub enum Error {
 
     #[error("Image 'a' of type {0} cannot accept blends from image 'b' of type {1}")]
     UnsupportedBlend(&'static str, &'static str),
+
+    #[error("Cannot access alpha channel as image does not have an alpha channel")]
+    NoAlphaChannel,
 }

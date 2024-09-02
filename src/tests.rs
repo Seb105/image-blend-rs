@@ -80,14 +80,7 @@ mod test {
                     }
                     Err(e) => {
                         // Should only error if a is L or La and b is Rgb or Rgba
-                        match e {
-                            crate::error::Error::DimensionMismatch => {
-
-                            }
-                            _ => {
-                                assert!(!structure_a.rgb() && structure_b.rgb(), "{}", e);
-                            },
-                        }
+                        assert!(!structure_a.rgb() && structure_b.rgb(), "{}", e);
                     }
                 };
             });
@@ -144,5 +137,38 @@ mod test {
                 .save(format!("tests_out/overlay_{op_name}_ba.png"))
                 .unwrap();
         }
+    }
+    #[test]
+    fn test_alpha_getters_n_setters() {
+        let img1 = DynamicImage::ImageRgba8(open("test_data/1_solid.png").unwrap().to_rgba8());
+        let img2 = DynamicImage::ImageRgba8(open("test_data/2.png").unwrap().to_rgba8());
+
+        let img2alpha = img2.get_alpha().unwrap();
+        img2alpha.clone().save("tests_out/alpha_get_alpha.png").unwrap();
+
+        let mut img1_with_alpha = img1.clone();
+        img1_with_alpha.set_alpha(&img2alpha).unwrap();
+        img1_with_alpha
+            .save("tests_out/alpha_set_alpha.png")
+            .unwrap();
+
+        let mut img1_transplant_alpha = img1.clone();
+        img1_transplant_alpha.transplant_alpha(&img2).unwrap();
+        img1_transplant_alpha
+            .save("tests_out/alpha_transplant_alpha.png")
+            .unwrap();
+    }
+    fn test_alpha_getters_n_setters_dynamics() {
+        let img1 = open("test_data/1.png").unwrap();
+        let img2 = open("test_data/2.png").unwrap();
+        as_all_types(&img1).par_bridge().for_each(|a| {
+            let color_a = a.color().color_str();
+            let structure_a: ColorStructure = a.color().into();
+            as_all_types(&img2).par_bridge().for_each(|b| {
+                let color_b = b.color().color_str();
+                let structure_b: ColorStructure = b.color().into();
+                todo!("Finish this test");
+            });
+        });
     }
 }
