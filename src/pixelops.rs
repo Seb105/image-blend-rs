@@ -1,3 +1,37 @@
+/*!
+This module contains functions for performing pixel operations.
+
+All arguments and returns are f64 values in the range 0.0..1.0.
+
+Returns are not bounded in these functions, but are clamped to 0.0..1.0 before being converted back to the input type in the blend trait.
+
+Formulas taken from [Wikipedia](https://en.wikipedia.org/wiki/Blend_modes).
+
+Analagous blend modes of the same name in Photoshop.
+
+# Examples
+
+```
+use image::open;
+use image_blend::{BufferBlend};
+use image_blend::pixelops::pixel_mult;
+
+// Load an image
+let mut img1_dynamic = open("test_data/1.png").unwrap();
+let mut img1_buffer = img1_dynamic.as_mut_rgba8().unwrap();
+
+// Load another image
+let img2_dynamic = open("test_data/2.png").unwrap();
+let img2_buffer = img2_dynamic.as_rgba8().unwrap();
+
+// Blend the images using the pixel_mult function
+img1_buffer.blend(&img2_buffer, pixel_mult, true, false).unwrap();
+img1_buffer.save("tests_out/doctest_buffer_blend_result.png").unwrap();
+
+```
+*/
+
+
 #[must_use] 
 pub fn pixel_add(a: f64, b: f64) -> f64 {
     a + b
@@ -17,7 +51,7 @@ pub fn pixel_div(a: f64, b: f64) -> f64 {
 pub fn pixel_darker(a: f64, b: f64) -> f64 {
     a.min(b)
 }
-#[must_use] 
+#[must_use]
 pub fn pixel_lighter(a: f64, b: f64) -> f64 {
     a.max(b)
 }
@@ -25,7 +59,7 @@ pub fn pixel_lighter(a: f64, b: f64) -> f64 {
 pub fn pixel_diff(a: f64, b: f64) -> f64 {
     (a - b).abs()
 }
-#[must_use] 
+#[must_use]
 pub fn pixel_mult(a: f64, b: f64) -> f64 {
     a * b
 }

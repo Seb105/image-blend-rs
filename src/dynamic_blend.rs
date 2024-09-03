@@ -44,9 +44,10 @@ pub trait DynamicChops {
     // Load an image
     let mut img1_dynamic = open("test_data/1.png").unwrap();
 
-    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    // Load another image
     let img2_dynamic = open("test_data/2.png").unwrap();
 
+    // Blend the images using the pixel_mult function
     img1_dynamic.blend(&img2_dynamic, pixel_mult, true, false).unwrap();
     img1_dynamic.save("tests_out/doctest_dynamic_blend_result.png").unwrap();
 

@@ -6,6 +6,7 @@ authors = ["Seb Smith"]
 description = "Type-agnostic support for image blending operations (add, multiply, screen, etc) for the image crate. Support for custom blends and utils for alpha channel manipulation."
 license = "MIT OR Apache-2.0"
 readme = "readme.md"
+repository = "https://github.com/Seb105/image-blend-rs"
 keywords = [
     "image",
     "image-rs",

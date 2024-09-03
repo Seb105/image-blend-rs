@@ -10,16 +10,6 @@ where
     P: Pixel,
     Container: DerefMut<Target = [P::Subpixel]> + AsRef<[<P as Pixel>::Subpixel]>
 {
-    #[allow(clippy::type_complexity)]
-    fn get_alpha(
-        &self
-    ) -> Option<Self> where Self: std::marker::Sized;
-}
-impl<P, Container> BufferGetAlpha<P, Container> for ImageBuffer<P, Container>
-where
-    P: Pixel,
-    Container: DerefMut<Target = [P::Subpixel]> + AsRef<[<P as Pixel>::Subpixel]> + Clone
-{
     /**
     Get the alpha channel of this image as a grayscale with the same number of channels as the input image. (i.e a 3 channel rgb image will return a 3 channel rgb grayscale image)
 
@@ -48,6 +38,15 @@ where
 
     ```
     */
+    fn get_alpha(
+        &self
+    ) -> Option<Self> where Self: std::marker::Sized;
+}
+impl<P, Container> BufferGetAlpha<P, Container> for ImageBuffer<P, Container>
+where
+    P: Pixel,
+    Container: DerefMut<Target = [P::Subpixel]> + AsRef<[<P as Pixel>::Subpixel]> + Clone
+{
     fn get_alpha(
         &self,
     ) -> Option<Self> {

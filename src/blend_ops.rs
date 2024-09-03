@@ -63,10 +63,11 @@ where
     let mut img1_dynamic = open("test_data/1.png").unwrap();
     let mut img1_buffer = img1_dynamic.as_mut_rgba8().unwrap();
 
-    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    // Load another image
     let img2_dynamic = open("test_data/2.png").unwrap();
     let img2_buffer = img2_dynamic.as_rgba8().unwrap();
 
+    // Blend the images using the pixel_mult function
     img1_buffer.blend(&img2_buffer, pixel_mult, true, false).unwrap();
     img1_buffer.save("tests_out/doctest_buffer_blend_result.png").unwrap();
 
