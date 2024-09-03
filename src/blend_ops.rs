@@ -12,17 +12,64 @@ use crate::{
     error::Error,
 };
 
-pub fn dims_match<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Result<(), Error> {
+pub(crate) fn dims_match<T: GenericImageView, U: GenericImageView>(a: &mut T, b: &U) -> Result<(), Error> {
     if (a.dimensions()) != b.dimensions() {
         return Err(Error::DimensionMismatch);
     }
     Ok(())
 }
-pub trait Blend<P, Container>
+pub trait BufferBlend<P, Container>
 where
     P: Pixel,
     Container: Deref<Target = [P::Subpixel]> + AsRef<[P::Subpixel]>,
 {
+    /**
+    Blend `other` into `self` using the function `op`, where arg 0 is self and 1 is other.
+
+    Handles type conversion and alpha channel detection and placement automatically.
+
+    You may blend a luma image into an rgba image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
+
+    # Arguments
+
+    Use `apply_to_color` and `apply_to_alpha` to control which channels are affected.
+
+    If `apply_to_alpha` is true but `self` or `other` does not have an alpha channel, nothing will happen.
+
+    `op` is a function that takes two f64 values and returns a f64 value. (e.g. `|self, other| self + other`)
+
+    Standard blend modes such as those found in photoshop are provided as functions (e.g. `pixel_add`, `pixel_mult`, etc.).
+
+    The values are normalized to the range 0.0..1.0 before blending, and then scaled back to the input type's range.
+
+    The output from `op` is automatically clamped from 0.0..1.0 before being converted back to the input type so you don't need to worry about overflow/underflow.
+
+    # Errors
+
+    `DimensionMismatch`: `self` and `other` have different dimensions
+
+    `UnsupportedBlend`: `self` is a luma image and `other` is an rgb image
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::{BufferGetAlpha, BufferSetAlpha};
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+    let img1_buffer = img1_dynamic.as_rgba8().unwrap();
+    let img1_alpha = img1_buffer.get_alpha().unwrap();
+    img1_alpha.clone().save("tests_out/doctest_buffer_getalpha_alpha.png").unwrap();
+
+    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
+    img2_buffer.set_alpha(&img1_alpha).unwrap();
+    img2_buffer.save("tests_out/doctest_buffer_getalpha_result.png").unwrap();
+
+    ```
+    */
     fn blend(
         &mut self,
         other: &ImageBuffer<P, Container>,
@@ -31,7 +78,7 @@ where
         apply_to_alpha: bool,
     ) -> Result<(), Error>;
 }
-impl<P, Pmut, Container, ContainerMut> Blend<P, Container> for ImageBuffer<Pmut, ContainerMut>
+impl<P, Pmut, Container, ContainerMut> BufferBlend<P, Container> for ImageBuffer<Pmut, ContainerMut>
 where
     Pmut: Pixel,
     P: Pixel,

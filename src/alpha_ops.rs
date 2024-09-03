@@ -1,11 +1,11 @@
 use std::{iter::zip, ops::{Deref, DerefMut}};
 
-use image::{imageops::grayscale, GenericImageView, ImageBuffer, Luma, Pixel};
-use num_traits::{Bounded, NumCast};
+use image::{ImageBuffer, Pixel};
+use num_traits::NumCast;
 
 use crate::{blend_ops::{dims_match, type_max}, enums::ColorStructure, error::Error};
 
-pub trait GetAlpha<P, Container>
+pub trait BufferGetAlpha<P, Container>
 where
     P: Pixel,
     Container: DerefMut<Target = [P::Subpixel]> + AsRef<[<P as Pixel>::Subpixel]>
@@ -15,12 +15,39 @@ where
         &self
     ) -> Option<Self> where Self: std::marker::Sized;
 }
-impl<P, Container> GetAlpha<P, Container> for ImageBuffer<P, Container>
+impl<P, Container> BufferGetAlpha<P, Container> for ImageBuffer<P, Container>
 where
     P: Pixel,
     Container: DerefMut<Target = [P::Subpixel]> + AsRef<[<P as Pixel>::Subpixel]> + Clone
 {
-    // Get the alpha channel of an image as a grayscale image
+    /**
+    Get the alpha channel of this image as a grayscale with the same number of channels as the input image. (i.e a 3 channel rgb image will return a 3 channel rgb grayscale image)
+
+    The alpha channel of the returned image is set to the maximum value of the input type.
+
+    If the image does not have an alpha channel, return None.
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::{BufferGetAlpha, BufferSetAlpha};
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+    let img1_buffer = img1_dynamic.as_rgba8().unwrap();
+    let img1_alpha = img1_buffer.get_alpha().unwrap();
+    img1_alpha.clone().save("tests_out/doctest_buffer_getalpha_alpha.png").unwrap();
+
+    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
+    img2_buffer.set_alpha(&img1_alpha).unwrap();
+    img2_buffer.save("tests_out/doctest_buffer_getalpha_result.png").unwrap();
+
+    ```
+    */
     fn get_alpha(
         &self,
     ) -> Option<Self> {
@@ -28,7 +55,7 @@ where
         if !color_structure.alpha() {
             return None;
         }
-        let colour_channels = if (color_structure.rgb()) {
+        let colour_channels = if color_structure.rgb() {
             vec![0, 1, 2]
         } else {
             vec![0]
@@ -49,24 +76,83 @@ where
         Some(alpha)
     }
 }
-pub trait SetAlpha<P, Container>
+pub trait BufferSetAlpha<P, Container>
 where
     P: Pixel,
     Container: Deref<Target = [P::Subpixel]> + AsRef<[P::Subpixel]>,
 {
-    // Set an image's alpha channel from a grayscale image
-    // WARNING: Supports any type, but only the first channel will be used.
+    /**
+    Set an image's alpha channel using the grascale colour of another image. 
+
+    Handles type conversion and alpha channel detection and placement automatically.
+
+    WARNING: `other` can be of any type, but only the first channel will be used to set the alpha channel.
+
+    # Errors
+    `NoAlphaChannel`: `self` does not have an alpha channel
+
+    `DimensionMismatch`: `self` and `other` have different dimensions
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::{BufferGetAlpha, BufferSetAlpha};
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+    let img1_buffer = img1_dynamic.as_rgba8().unwrap();
+    let img1_alpha = img1_buffer.get_alpha().unwrap();
+    img1_alpha.clone().save("tests_out/doctest_buffer_setalpha_alpha.png").unwrap();
+
+    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
+    img2_buffer.set_alpha(&img1_alpha).unwrap();
+    img2_buffer.save("tests_out/doctest_buffer_setalpha_result.png").unwrap();
+
+    ```
+    */
     fn set_alpha(
         &mut self,
         other: &ImageBuffer<P, Container>
     ) -> Result<(), Error>;
-    // Transplant the alpha channel from one image to another
+    
+    /**
+    Set an image's alpha channel from another images alpha channel. 
+
+    Handles type conversion and alpha channel placement automatically.
+
+    # Errors
+    `NoAlphaChannel`: `self` or `other` does not have an alpha channel
+
+    `DimensionMismatch`: `self` and `other` have different dimensions
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::{BufferGetAlpha, BufferSetAlpha};
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+    let img1_buffer = img1_dynamic.as_rgba8().unwrap();
+
+    // Load another image and set its alpha channel to a copy of the first image's alpha channel.
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
+    img2_buffer.transplant_alpha(&img1_buffer).unwrap();
+    img2_buffer.save("tests_out/doctest_buffer_transplantalpha_result.png").unwrap();
+    ```
+    */
     fn transplant_alpha(
         &mut self,
         other: &ImageBuffer<P, Container>
     ) -> Result<(), Error>;
 }
-impl<P, Pmut, Container, ContainerMut> SetAlpha<P, Container> for ImageBuffer<Pmut, ContainerMut>
+impl<P, Pmut, Container, ContainerMut> BufferSetAlpha<P, Container> for ImageBuffer<Pmut, ContainerMut>
 where
     Pmut: Pixel,
     P: Pixel,

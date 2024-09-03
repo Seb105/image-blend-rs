@@ -4,14 +4,13 @@ mod test {
     use std::iter;
 
     use crate::{
-        blend_ops::Blend,
-        dynamic_blend::DynamicBlend,
         pixelops::{
             pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter,
             pixel_mult, pixel_overlay, pixel_screen, pixel_soft_light, pixel_sub,
         }, enums::{ColorStructure, ColorString},
+        DynamicChops
     };
-    use image::{open, DynamicImage, Pixel};
+    use image::{open, DynamicImage};
     use rayon::prelude::{ParallelBridge, ParallelIterator};
     fn as_all_types(img: &DynamicImage) -> impl Iterator<Item = DynamicImage> {
         iter::once(DynamicImage::ImageLuma8(img.clone().into_luma8()))
@@ -200,16 +199,5 @@ mod test {
                 "tests_out/alpha_alltypes_{color_a}_alpha.png",
             )).unwrap();
         });
-    }
-    #[test]
-    fn test_rgb32f() {
-        let image_a = open("test_data/1.png").unwrap().into_rgba32f();
-        let mut max: f32 = 0.;
-        image_a.pixels().for_each(|px| {
-            px.channels().iter().for_each(|ch| {
-                max = max.max(*ch);
-            });
-        });
-        println!("Max: {max}");
     }
 }

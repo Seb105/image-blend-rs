@@ -1,10 +1,55 @@
-use std::{iter::{zip, Product}, ops::{Deref, DerefMut}};
+use std::ops::DerefMut;
 
-use image::{ColorType, DynamicImage, GenericImageView, ImageBuffer, Luma, Pixel};
+use image::{ColorType, DynamicImage, ImageBuffer, Pixel};
 
-use crate::{alpha_ops::{GetAlpha, SetAlpha}, blend_ops::Blend, enums::ColorStructure, error::{self, Error}};
+use crate::{BufferBlend, BufferGetAlpha, BufferSetAlpha, Error};
 
-pub trait DynamicBlend {
+pub trait DynamicChops {
+    /**
+    Blend `other` into `self` using the function `op`, where arg 0 is self and 1 is other.
+
+    Handles type conversion and alpha channel detection and placement automatically.
+
+    You may blend a luma image into an rgba image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
+
+    # Arguments
+
+    Use `apply_to_color` and `apply_to_alpha` to control which channels are affected.
+
+    If `apply_to_alpha` is true but `self` or `other` does not have an alpha channel, nothing will happen.
+
+    `op` is a function that takes two f64 values and returns a f64 value. (e.g. `|self, other| self + other`)
+
+    Standard blend modes such as those found in photoshop are provided as functions (e.g. `pixel_add`, `pixel_mult`, etc.).
+
+    The values are normalized to the range 0.0..1.0 before blending, and then scaled back to the input type's range.
+
+    The output from `op` is automatically clamped from 0.0..1.0 before being converted back to the input type so you don't need to worry about overflow/underflow.
+
+    # Errors
+
+    `DimensionMismatch`: `self` and `other` have different dimensions
+
+    `UnsupportedBlend`: `self` is a luma image and `other` is an rgb image
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::DynamicChops;
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+    let img1_alpha = img1_dynamic.get_alpha().unwrap();
+    img1_alpha.clone().save("tests_out/doctest_dynamic_getalpha_alpha.png").unwrap();
+
+    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    img2_dynamic.set_alpha(&img1_alpha).unwrap();
+    img2_dynamic.save("tests_out/doctest_dynamic_getalpha_result.png").unwrap();
+
+    ```
+    */
     fn blend (
         &mut self,
         other: &Self,
@@ -12,23 +57,102 @@ pub trait DynamicBlend {
         apply_to_color: bool,
         apply_to_alpha: bool,
     ) -> Result<(), Error>;
-    // Get alpha as a grayscale image. Output type is same as input type.
+    /**
+    Get the alpha channel of this image as a grayscale with the same number of channels as the input image. (i.e a 3 channel rgb image will return a 3 channel rgb grayscale image)
+
+    The alpha channel of the returned image is set to the maximum value of the input type.
+
+    If the image does not have an alpha channel, return None.
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::DynamicChops;
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+    let img1_alpha = img1_dynamic.get_alpha().unwrap();
+    img1_alpha.clone().save("tests_out/doctest_dynamic_getalpha_alpha.png").unwrap();
+
+    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    img2_dynamic.set_alpha(&img1_alpha).unwrap();
+    img2_dynamic.save("tests_out/doctest_dynamic_getalpha_result.png").unwrap();
+
+    ```
+    */
     fn get_alpha(
         &self,
-    ) -> Result<Self, Error> where Self: std::marker::Sized;
-    // Transplant the alpha from image other to self.
+    ) -> Option<Self> where Self: std::marker::Sized;
+    /**
+    Set an image's alpha channel from another images alpha channel. 
+
+    Handles type conversion and alpha channel placement automatically.
+
+    # Errors
+    `NoAlphaChannel`: `self` or `other` does not have an alpha channel
+
+    `DimensionMismatch`: `self` and `other` have different dimensions
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::DynamicChops;
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+
+    // Load another image and set its alpha channel to a copy of the first image's alpha channel.
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    img2_dynamic.transplant_alpha(&img1_dynamic).unwrap();
+    img2_dynamic.save("tests_out/doctest_buffer_transplantalpha_result.png").unwrap();
+    ```
+    */
     fn transplant_alpha(
         &mut self,
         other: &Self
     ) -> Result<(), Error>;
-    // Set alpha from a grayscale image. Note that input type can be any type, but only the first channel will be used.
-    // So, if you want to set alpha from a color image, you should convert it to grayscale first.
+    /**
+    Set an image's alpha channel using the grascale colour of another image. 
+
+    Handles type conversion and alpha channel detection and placement automatically.
+
+    WARNING: `other` can be of any type, but only the first channel will be used to set the alpha channel.
+
+    # Errors
+    `NoAlphaChannel`: `self` does not have an alpha channel
+
+    `DimensionMismatch`: `self` and `other` have different dimensions
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::DynamicChops;
+
+    // Load an image and get its alpha channel
+    let img1_dynamic = open("test_data/1.png").unwrap();
+    let img1_alpha = img1_dynamic.get_alpha().unwrap();
+    img1_alpha.clone().save("tests_out/doctest_buffer_setalpha_alpha.png").unwrap();
+
+    // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    img2_dynamic.set_alpha(&img1_alpha).unwrap();
+    img2_dynamic.save("tests_out/doctest_buffer_setalpha_result.png").unwrap();
+
+    ```
+    */
     fn set_alpha(
         &mut self,
         other: &Self
     ) -> Result<(), Error> where Self: std::marker::Sized;
 }
-impl DynamicBlend for DynamicImage {
+impl DynamicChops for DynamicImage {
     fn blend (
         &mut self,
         other: &Self,
@@ -53,7 +177,7 @@ impl DynamicBlend for DynamicImage {
     }
     fn get_alpha(
         &self,
-    ) -> Result<DynamicImage, Error> {
+    ) -> Option<DynamicImage> {
         let color = self.color();
         let mut copy = self.clone();
         match color {
@@ -68,8 +192,8 @@ impl DynamicBlend for DynamicImage {
             ColorType::Rgb32F => get_alpha_step_a(copy.as_mut_rgb32f().unwrap()),
             ColorType::Rgba32F => get_alpha_step_a(copy.as_mut_rgba32f().unwrap()),
             _ => Err(Error::UnsupportedType),
-        }?;
-        Ok(copy.grayscale())
+        }.ok()?;
+        Some(copy)
     }
     fn transplant_alpha(
             &mut self,

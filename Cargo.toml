@@ -1,9 +1,9 @@
 [package]
-name = "image-blend-rs"
+name = "image-blend"
 version = "0.1.0"
 edition = "2021"
 authors = ["Seb Smith"]
-description = "A library adding common and custom blending modes, also known as channel operations or chops to the image crate"
+description = "Type-agnostic support for image blending operations (add, multiply, screen, etc) for the image crate. Support for custom blends and utils for alpha channel manipulation."
 license = "MIT OR Apache-2.0"
 readme = "readme.md"
 keywords = [
@@ -13,6 +13,7 @@ keywords = [
     "imagechops",
     "channel-operations",
     "blending-modes",
+    "alpha"
 ]
 
 [profile.dev]
