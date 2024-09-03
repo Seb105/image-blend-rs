@@ -9,10 +9,8 @@ readme = "readme.md"
 repository = "https://github.com/Seb105/image-blend-rs"
 keywords = [
     "image",
-    "image-rs",
     "blend",
     "imagechops",
-    "channel-operations",
     "blending-modes",
     "alpha"
 ]
