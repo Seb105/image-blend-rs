@@ -134,8 +134,6 @@ The values passed to this function are `0..1` where `0.` is the darkest a pixel 
 
 `a` is self, `b` is other.
 
-Note that the return is cla
-
 ```rust
 use image::open;
 use image_blend::DynamicChops;
