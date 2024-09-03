@@ -63,7 +63,7 @@ pub trait DynamicChops {
     use image::open;
     use image_blend::DynamicChops;
 
-    let closest_to_grey = |a: f64, b: f64| {
+    let closest_to_gray = |a: f64, b: f64| {
         let a_diff = (a - 0.5).abs();
         let b_diff = (b - 0.5).abs();
         if a_diff < b_diff {
@@ -80,7 +80,7 @@ pub trait DynamicChops {
     let img2_dynamic = open("test_data/2.png").unwrap();
 
     // Blend the images using our custom function
-    img1_dynamic.blend(&img2_dynamic, closest_to_grey, true, false).unwrap();
+    img1_dynamic.blend(&img2_dynamic, closest_to_gray, true, false).unwrap();
     img1_dynamic.save("tests_out/doctest_dynamic_custom_result.png").unwrap();
 
     ```
@@ -152,7 +152,7 @@ pub trait DynamicChops {
         other: &Self
     ) -> Result<(), Error>;
     /**
-    Set an image's alpha channel using the grascale colour of another image. 
+    Set an image's alpha channel using the grascale color of another image. 
 
     Handles type conversion and alpha channel detection and placement automatically.
 

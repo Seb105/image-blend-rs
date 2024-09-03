@@ -83,7 +83,7 @@ where
     use image::open;
     use image_blend::BufferBlend;
 
-    let closest_to_grey = |a: f64, b: f64| {
+    let closest_to_gray = |a: f64, b: f64| {
         let a_diff = (a - 0.5).abs();
         let b_diff = (b - 0.5).abs();
         if a_diff < b_diff {
@@ -102,7 +102,7 @@ where
     let img2_buffer = img2_dynamic.to_rgba16();
 
     // Blend the images using our custom function
-    img1_buffer.blend(&img2_buffer, closest_to_grey, true, false).unwrap();
+    img1_buffer.blend(&img2_buffer, closest_to_gray, true, false).unwrap();
     img1_buffer.save("tests_out/doctest_buffer_custom_result.png").unwrap();
 
     ```
@@ -135,7 +135,7 @@ where
         let structure_a: ColorStructure = self.sample_layout().try_into()?;
         let structure_b: ColorStructure = other.sample_layout().try_into()?;
 
-        let (colour_channels, alpha_channels) = get_channels(&structure_a, &structure_b)?;
+        let (color_channels, alpha_channels) = get_channels(&structure_a, &structure_b)?;
 
         let a_max = type_max::<Pmut>();
         let b_max = type_max::<P>();
@@ -153,7 +153,7 @@ where
                 if alpha_weight == 0. {
                     return;
                 };
-                colour_channels.clone().for_each(|(ch_a, ch_b)| {
+                color_channels.clone().for_each(|(ch_a, ch_b)| {
                     let a_f64: f64 = <f64 as NumCast>::from(channel_a[ch_a]).unwrap() / a_max;
                     let b_f64: f64 = <f64 as NumCast>::from(channel_b[ch_b]).unwrap() / b_max;
                     let new_64_unweighted: f64 = NumCast::from(op(a_f64, b_f64)).unwrap();
@@ -200,7 +200,7 @@ fn get_channels(
     structure_a: &ColorStructure,
     structure_b: &ColorStructure,
 ) -> Result<ChannelIter, Error> {
-    let colour_channels = match (structure_a.rgb(), structure_b.rgb()) {
+    let color_channels = match (structure_a.rgb(), structure_b.rgb()) {
         (true, true) => zip(vec![0usize, 1, 2], vec![0usize, 1, 2]),
         (true, false) => zip(vec![0, 1, 2], vec![0, 0, 0]),
         (false, false) => zip(vec![0], vec![0]),
@@ -216,5 +216,5 @@ fn get_channels(
         )),
         _ => None,
     };
-    Ok((colour_channels, alpha_channels))
+    Ok((color_channels, alpha_channels))
 }

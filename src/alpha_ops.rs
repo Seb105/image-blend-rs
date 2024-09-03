@@ -54,7 +54,7 @@ where
         if !color_structure.alpha() {
             return None;
         }
-        let colour_channels = if color_structure.rgb() {
+        let color_channels = if color_structure.rgb() {
             vec![0, 1, 2]
         } else {
             vec![0]
@@ -67,7 +67,7 @@ where
             // Don't need to cast here because we know the types are the same
             let alpha_val = px.channels()[alpha_channel];
             let px_channels = px_luma.channels_mut();
-            for ch in colour_channels.clone() {
+            for ch in color_channels.clone() {
                 px_channels[ch] = alpha_val;
             }
             px_channels[alpha_channel] = max;
@@ -81,7 +81,7 @@ where
     Container: Deref<Target = [P::Subpixel]> + AsRef<[P::Subpixel]>,
 {
     /**
-    Set an image's alpha channel using the grascale colour of another image. 
+    Set an image's alpha channel using the grascale color of another image. 
 
     Handles type conversion and alpha channel detection and placement automatically.
 

@@ -96,8 +96,8 @@ mod test {
         for do_color in [true, false] {
             for do_alpha in [true, false] {
                 let blend_params = match (do_color, do_alpha) {
-                    (true, true) => "colour_alpha",
-                    (true, false) => "colour",
+                    (true, true) => "color_alpha",
+                    (true, false) => "color",
                     (false, true) => "alpha",
                     (false, false) => "nothing",
                 };
