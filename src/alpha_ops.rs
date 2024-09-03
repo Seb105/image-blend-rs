@@ -32,7 +32,7 @@ where
 
     // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
     let mut img2_dynamic = open("test_data/2.png").unwrap();
-    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
+    let mut img2_buffer = img2_dynamic.to_rgba16();
     img2_buffer.set_alpha(&img1_alpha).unwrap();
     img2_buffer.save("tests_out/doctest_buffer_getalpha_result.png").unwrap();
 
@@ -107,7 +107,7 @@ where
 
     // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
     let mut img2_dynamic = open("test_data/2.png").unwrap();
-    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
+    let mut img2_buffer = img2_dynamic.to_rgba16();
     img2_buffer.set_alpha(&img1_alpha).unwrap();
     img2_buffer.save("tests_out/doctest_buffer_setalpha_result.png").unwrap();
 
@@ -141,7 +141,7 @@ where
 
     // Load another image and set its alpha channel to a copy of the first image's alpha channel.
     let mut img2_dynamic = open("test_data/2.png").unwrap();
-    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
+    let mut img2_buffer = img2_dynamic.to_rgba16();
     img2_buffer.transplant_alpha(&img1_buffer).unwrap();
     img2_buffer.save("tests_out/doctest_buffer_transplantalpha_result.png").unwrap();
     ```

@@ -22,7 +22,7 @@ let mut img1_buffer = img1_dynamic.as_mut_rgba8().unwrap();
 
 // Load another image
 let img2_dynamic = open("test_data/2.png").unwrap();
-let img2_buffer = img2_dynamic.as_rgba8().unwrap();
+let img2_buffer = img2_dynamic.to_rgba16();
 
 // Blend the images using the pixel_mult function
 img1_buffer.blend(&img2_buffer, pixel_mult, true, false).unwrap();
