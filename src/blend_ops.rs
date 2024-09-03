@@ -54,9 +54,12 @@ where
 
     # Examples
 
+    ## Example 1:
+
+    Using the `pixel_mult` function to blend two images together:
     ```
     use image::open;
-    use image_blend::{BufferBlend};
+    use image_blend::BufferBlend;
     use image_blend::pixelops::pixel_mult;
 
     // Load an image
@@ -70,6 +73,37 @@ where
     // Blend the images using the pixel_mult function
     img1_buffer.blend(&img2_buffer, pixel_mult, true, false).unwrap();
     img1_buffer.save("tests_out/doctest_buffer_blend_result.png").unwrap();
+
+    ```
+    ## Example 2:
+
+    Using a custom function to blend two images together:
+
+    ```
+    use image::open;
+    use image_blend::BufferBlend;
+
+    let closest_to_grey = |a: f64, b: f64| {
+        let a_diff = (a - 0.5).abs();
+        let b_diff = (b - 0.5).abs();
+        if a_diff < b_diff {
+            a
+        } else {
+            b
+        }
+    };
+
+    // Load an image
+    let mut img1_dynamic = open("test_data/1.png").unwrap();
+    let mut img1_buffer = img1_dynamic.as_mut_rgba8().unwrap();
+
+    // Load another image
+    let img2_dynamic = open("test_data/2.png").unwrap();
+    let img2_buffer = img2_dynamic.to_rgba16();
+
+    // Blend the images using our custom function
+    img1_buffer.blend(&img2_buffer, closest_to_grey, true, false).unwrap();
+    img1_buffer.save("tests_out/doctest_buffer_custom_result.png").unwrap();
 
     ```
     */

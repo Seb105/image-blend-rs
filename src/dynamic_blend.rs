@@ -36,6 +36,9 @@ pub trait DynamicChops {
 
     # Examples
 
+    ## Example 1:
+
+    Using the `pixel_mult` function to blend two images together:
     ```
     use image::open;
     use image_blend::DynamicChops;
@@ -50,6 +53,35 @@ pub trait DynamicChops {
     // Blend the images using the pixel_mult function
     img1_dynamic.blend(&img2_dynamic, pixel_mult, true, false).unwrap();
     img1_dynamic.save("tests_out/doctest_dynamic_blend_result.png").unwrap();
+
+    ```
+    ## Example 2:
+
+    Using a custom function to blend two images together:
+
+    ```
+    use image::open;
+    use image_blend::DynamicChops;
+
+    let closest_to_grey = |a: f64, b: f64| {
+        let a_diff = (a - 0.5).abs();
+        let b_diff = (b - 0.5).abs();
+        if a_diff < b_diff {
+            a
+        } else {
+            b
+        }
+    };
+
+    // Load an image
+    let mut img1_dynamic = open("test_data/1.png").unwrap();
+
+    // Load another image
+    let img2_dynamic = open("test_data/2.png").unwrap();
+
+    // Blend the images using our custom function
+    img1_dynamic.blend(&img2_dynamic, closest_to_grey, true, false).unwrap();
+    img1_dynamic.save("tests_out/doctest_dynamic_custom_result.png").unwrap();
 
     ```
     */
