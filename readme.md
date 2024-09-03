@@ -4,7 +4,7 @@
 
 Implementation of support for type-agnostic blending algorithms such as screen, multiply, lighter, etc, for the [image](https://crates.io/crates/image) crate
 
-Also provide support for getting alpha channnels as grayscale images, setting alpha channels from grayscale images, and transplanting alpha chnnales
+Also provide support for getting alpha channnels as grayscale images, setting alpha channels from grayscale images, and transplanting alpha channels directly from one image to another
 
 #### Type-agnostic: this library will automatically convert between input type when blending two images together.
 
