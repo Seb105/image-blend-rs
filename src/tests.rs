@@ -11,7 +11,7 @@ mod test {
             pixel_mult, pixel_overlay, pixel_screen, pixel_soft_light, pixel_sub,
         }, enums::{ColorStructure, ColorString},
     };
-    use image::{open, DynamicImage};
+    use image::{open, DynamicImage, Pixel};
     use rayon::prelude::{ParallelBridge, ParallelIterator};
     fn as_all_types(img: &DynamicImage) -> impl Iterator<Item = DynamicImage> {
         iter::once(DynamicImage::ImageLuma8(img.clone().into_luma8()))
@@ -72,11 +72,11 @@ mod test {
                 match res {
                     Ok(()) => {
                         // Convert to rgb before saving as can't save some types
-                        // let out = DynamicImage::ImageRgba8(a_copy.into_rgba8());
-                        // out.save(format!(
-                        //     "tests_out/dynamic_{color_a}_{color_b}.png",
-                        // ))
-                        // .unwrap();
+                        let out = DynamicImage::ImageRgba8(a_copy.into_rgba8());
+                        out.save(format!(
+                            "tests_out/dynamic_{color_a}_{color_b}.png",
+                        ))
+                        .unwrap();
                     }
                     Err(e) => {
                         // Should only error if a is L or La and b is Rgb or Rgba
@@ -158,17 +158,58 @@ mod test {
             .save("tests_out/alpha_transplant_alpha.png")
             .unwrap();
     }
+    #[test]
     fn test_alpha_getters_n_setters_dynamics() {
         let img1 = open("test_data/1.png").unwrap();
         let img2 = open("test_data/2.png").unwrap();
         as_all_types(&img1).par_bridge().for_each(|a| {
             let color_a = a.color().color_str();
             let structure_a: ColorStructure = a.color().into();
+            if !structure_a.alpha() {
+                return;
+            }
+            let a_alpha = a.get_alpha().unwrap();
             as_all_types(&img2).par_bridge().for_each(|b| {
                 let color_b = b.color().color_str();
                 let structure_b: ColorStructure = b.color().into();
-                todo!("Finish this test");
+                if !structure_b.alpha() {
+                    return;
+                }
+                let b_alpha = b.get_alpha().unwrap();
+
+                let mut a_with_b = a.clone();
+                a_with_b.set_alpha(&b_alpha).unwrap();
+
+                let mut a_transplant_b = a.clone();
+                a_transplant_b.transplant_alpha(&b).unwrap();
+
+                let mut b_with_a = b.clone();
+                b_with_a.set_alpha(&a_alpha).unwrap();
+
+                let mut b_transplant_a = b.clone();
+                b_transplant_a.transplant_alpha(&a).unwrap();
+
+                DynamicImage::ImageRgba8(a_with_b.into_rgba8()).save(format!(
+                    "tests_out/alpha_alltypes_{color_a}_set_{color_b}.png",
+                )).unwrap();
+                DynamicImage::ImageRgba8(a_transplant_b.into_rgba8()).save(format!(
+                    "tests_out/alpha_alltypes_{color_a}_transplant_{color_b}.png",
+                )).unwrap();
+            });
+            DynamicImage::ImageRgba8(a_alpha.into_rgba8()).save(format!(
+                "tests_out/alpha_alltypes_{color_a}_alpha.png",
+            )).unwrap();
+        });
+    }
+    #[test]
+    fn test_rgb32f() {
+        let image_a = open("test_data/1.png").unwrap().into_rgba32f();
+        let mut max: f32 = 0.;
+        image_a.pixels().for_each(|px| {
+            px.channels().iter().for_each(|ch| {
+                max = max.max(*ch);
             });
         });
+        println!("Max: {max}");
     }
 }
