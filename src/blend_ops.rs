@@ -53,8 +53,8 @@ where
 
         let (colour_channels, alpha_channels) = get_channels(&structure_a, &structure_b)?;
 
-        let a_max: f64 = NumCast::from(<Pmut as Pixel>::Subpixel::max_value()).unwrap();
-        let b_max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
+        let a_max = type_max::<Pmut>();
+        let b_max = type_max::<P>();
 
         if apply_to_color {
             zip(self.pixels_mut(), other.pixels()).for_each(|(px_a, px_b)| {
@@ -96,6 +96,16 @@ where
 
         Ok(())
     }
+}
+
+pub(crate) fn type_max<P>() -> f64 where P: Pixel {
+    let max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
+    let f32_max: f64 = NumCast::from(<f32 as Bounded>::max_value()).unwrap();
+    // Hack to get around f32 images having a max value of 1.0 not f32::MAX
+    if max - f32_max == 0. {
+        return 1.
+    }
+    max
 }
 
 type ChannelIter = (

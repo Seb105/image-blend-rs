@@ -3,7 +3,7 @@ use std::{iter::zip, ops::{Deref, DerefMut}};
 use image::{imageops::grayscale, GenericImageView, ImageBuffer, Luma, Pixel};
 use num_traits::{Bounded, NumCast};
 
-use crate::{blend_ops::dims_match, enums::ColorStructure, error::Error};
+use crate::{blend_ops::{dims_match, type_max}, enums::ColorStructure, error::Error};
 
 pub trait GetAlpha<P, Container>
 where
@@ -35,14 +35,16 @@ where
         };
         let alpha_channel = color_structure.alpha_channel().unwrap();
         let mut alpha = self.clone();
+
+        let max: <P as Pixel>::Subpixel = NumCast::from(type_max::<P>()).unwrap();
         zip(alpha.pixels_mut(), self.pixels()).for_each(|(px_luma, px)| {
             // Don't need to cast here because we know the types are the same
             let alpha_val = px.channels()[alpha_channel];
             let px_channels = px_luma.channels_mut();
             for ch in colour_channels.clone() {
-                px_channels[ch] = alpha_val
+                px_channels[ch] = alpha_val;
             }
-            px_channels[alpha_channel] = <P as Pixel>::Subpixel::max_value()
+            px_channels[alpha_channel] = max;
         });
         Some(alpha)
     }
@@ -81,8 +83,8 @@ where
         let structure_a: ColorStructure = self.sample_layout().try_into()?;
         let alpha_channel = structure_a.alpha_channel().ok_or(Error::NoAlphaChannel)?;
 
-        let a_max: f64 = NumCast::from(<Pmut as Pixel>::Subpixel::max_value()).unwrap();
-        let b_max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
+        let a_max = type_max::<Pmut>();
+        let b_max = type_max::<P>();
 
         zip(self.pixels_mut(), other.pixels()).for_each(|(px, px_luma)| {
             // Need to cast here because there is no guarantee P and Pmut are the same type
@@ -103,8 +105,8 @@ where
         let alpha_a = structure_a.alpha_channel().ok_or(Error::NoAlphaChannel)?;
         let alpha_b = structure_b.alpha_channel().ok_or(Error::NoAlphaChannel)?;
 
-        let a_max: f64 = NumCast::from(<Pmut as Pixel>::Subpixel::max_value()).unwrap();
-        let b_max: f64 = NumCast::from(<P as Pixel>::Subpixel::max_value()).unwrap();
+        let a_max = type_max::<Pmut>();
+        let b_max = type_max::<P>();
 
         zip(self.pixels_mut(), other.pixels()).for_each(|(pxa, pxb)| {
             // Need to cast here because there is no guarantee P and Pmut are the same type
