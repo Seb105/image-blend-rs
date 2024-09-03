@@ -10,6 +10,8 @@ pub trait DynamicChops {
 
     Handles type conversion and alpha channel detection and placement automatically.
 
+    If `other` has an alpha channel, it will be used to weight the blending of the color channels. If there is no alpha channel, the blending will be unweighted.
+
     You may blend a luma image into an rgba image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
 
     # Arguments
@@ -37,16 +39,16 @@ pub trait DynamicChops {
     ```
     use image::open;
     use image_blend::DynamicChops;
+    use image_blend::pixelops::pixel_mult;
 
-    // Load an image and get its alpha channel
-    let img1_dynamic = open("test_data/1.png").unwrap();
-    let img1_alpha = img1_dynamic.get_alpha().unwrap();
-    img1_alpha.clone().save("tests_out/doctest_dynamic_getalpha_alpha.png").unwrap();
+    // Load an image
+    let mut img1_dynamic = open("test_data/1.png").unwrap();
 
     // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
-    let mut img2_dynamic = open("test_data/2.png").unwrap();
-    img2_dynamic.set_alpha(&img1_alpha).unwrap();
-    img2_dynamic.save("tests_out/doctest_dynamic_getalpha_result.png").unwrap();
+    let img2_dynamic = open("test_data/2.png").unwrap();
+
+    img1_dynamic.blend(&img2_dynamic, pixel_mult, true, false).unwrap();
+    img1_dynamic.save("tests_out/doctest_dynamic_blend_result.png").unwrap();
 
     ```
     */
@@ -109,7 +111,7 @@ pub trait DynamicChops {
     // Load another image and set its alpha channel to a copy of the first image's alpha channel.
     let mut img2_dynamic = open("test_data/2.png").unwrap();
     img2_dynamic.transplant_alpha(&img1_dynamic).unwrap();
-    img2_dynamic.save("tests_out/doctest_buffer_transplantalpha_result.png").unwrap();
+    img2_dynamic.save("tests_out/doctest_dynamic_transplantalpha_result.png").unwrap();
     ```
     */
     fn transplant_alpha(
@@ -138,12 +140,12 @@ pub trait DynamicChops {
     // Load an image and get its alpha channel
     let img1_dynamic = open("test_data/1.png").unwrap();
     let img1_alpha = img1_dynamic.get_alpha().unwrap();
-    img1_alpha.clone().save("tests_out/doctest_buffer_setalpha_alpha.png").unwrap();
+    img1_alpha.clone().save("tests_out/doctest_dynamic_setalpha_alpha.png").unwrap();
 
     // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
     let mut img2_dynamic = open("test_data/2.png").unwrap();
     img2_dynamic.set_alpha(&img1_alpha).unwrap();
-    img2_dynamic.save("tests_out/doctest_buffer_setalpha_result.png").unwrap();
+    img2_dynamic.save("tests_out/doctest_dynamic_setalpha_result.png").unwrap();
 
     ```
     */

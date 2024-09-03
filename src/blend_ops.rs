@@ -28,6 +28,8 @@ where
 
     Handles type conversion and alpha channel detection and placement automatically.
 
+    If `other` has an alpha channel, it will be used to weight the blending of the color channels. If there is no alpha channel, the blending will be unweighted.
+
     You may blend a luma image into an rgba image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
 
     # Arguments
@@ -54,19 +56,19 @@ where
 
     ```
     use image::open;
-    use image_blend::{BufferGetAlpha, BufferSetAlpha};
+    use image_blend::{BufferBlend};
+    use image_blend::pixelops::pixel_mult;
 
-    // Load an image and get its alpha channel
-    let img1_dynamic = open("test_data/1.png").unwrap();
-    let img1_buffer = img1_dynamic.as_rgba8().unwrap();
-    let img1_alpha = img1_buffer.get_alpha().unwrap();
-    img1_alpha.clone().save("tests_out/doctest_buffer_getalpha_alpha.png").unwrap();
+    // Load an image
+    let mut img1_dynamic = open("test_data/1.png").unwrap();
+    let mut img1_buffer = img1_dynamic.as_mut_rgba8().unwrap();
 
     // Load another image and set its alpha channel to the first image's alpha channel, using the copied alpha channel
-    let mut img2_dynamic = open("test_data/2.png").unwrap();
-    let mut img2_buffer = img2_dynamic.as_mut_rgba8().unwrap();
-    img2_buffer.set_alpha(&img1_alpha).unwrap();
-    img2_buffer.save("tests_out/doctest_buffer_getalpha_result.png").unwrap();
+    let img2_dynamic = open("test_data/2.png").unwrap();
+    let img2_buffer = img2_dynamic.as_rgba8().unwrap();
+
+    img1_buffer.blend(&img2_buffer, pixel_mult, true, false).unwrap();
+    img1_buffer.save("tests_out/doctest_buffer_blend_result.png").unwrap();
 
     ```
     */
