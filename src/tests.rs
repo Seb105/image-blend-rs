@@ -10,6 +10,7 @@ mod test {
         }, enums::{ColorStructure, ColorString},
         DynamicChops
     };
+    const EXPORT_ALL: bool = false;
     use image::{open, DynamicImage};
     use rayon::prelude::{ParallelBridge, ParallelIterator};
     fn as_all_types(img: &DynamicImage) -> impl Iterator<Item = DynamicImage> {
@@ -70,6 +71,9 @@ mod test {
                 let res = a_copy.blend(&b, pixel_mult, true, true);
                 match res {
                     Ok(()) => {
+                        if !EXPORT_ALL {
+                            return;
+                        }
                         // Convert to rgb before saving as can't save some types
                         let out = DynamicImage::ImageRgba8(a_copy.into_rgba8());
                         out.save(format!(
@@ -95,7 +99,7 @@ mod test {
                     (true, true) => "colour_alpha",
                     (true, false) => "colour",
                     (false, true) => "alpha",
-                    (false, false) => continue,
+                    (false, false) => "nothing",
                 };
                 for (op_name, op) in all_pixel_ops() {
                     let mut img1_copy = img1.clone();
@@ -188,6 +192,9 @@ mod test {
                 let mut b_transplant_a = b.clone();
                 b_transplant_a.transplant_alpha(&a).unwrap();
 
+                if !EXPORT_ALL {
+                    return;
+                }
                 DynamicImage::ImageRgba8(a_with_b.into_rgba8()).save(format!(
                     "tests_out/alpha_alltypes_{color_a}_set_{color_b}.png",
                 )).unwrap();
@@ -195,6 +202,9 @@ mod test {
                     "tests_out/alpha_alltypes_{color_a}_transplant_{color_b}.png",
                 )).unwrap();
             });
+            if !EXPORT_ALL {
+                return;
+            }
             DynamicImage::ImageRgba8(a_alpha.into_rgba8()).save(format!(
                 "tests_out/alpha_alltypes_{color_a}_alpha.png",
             )).unwrap();
