@@ -104,7 +104,7 @@ pub fn pixel_hard_light(a: f64, b: f64) -> f64 {
     }
 }
 
-/// Applies the soft light blend mode to `a` and `b`.
+/// Applies the soft light blend mode to `a` and `b`. Uses W3C formula.
 #[must_use]
 pub fn pixel_soft_light(a: f64, b: f64) -> f64 {
     if b <= 0.5 {
@@ -119,8 +119,8 @@ pub fn pixel_soft_light(a: f64, b: f64) -> f64 {
     }
 }
 
-/// Returns `b`.
+/// Returns `b`. Basically paste/overwrite.
 #[must_use]
-pub fn pixel_paste(_a: f64, b: f64) -> f64 {
+pub fn pixel_normal(_a: f64, b: f64) -> f64 {
     b
 }
