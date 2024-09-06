@@ -14,6 +14,8 @@ pub trait DynamicChops {
 
     You may blend a luma image into an rgba image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
 
+    If `other` has an alpha channel, the output is weighted by this alpha channel (so if alpha for `other` for this pixel is 0.5, the blend effect will be 0.5 as strong)
+
     # Arguments
 
     Use `apply_to_color` and `apply_to_alpha` to control which channels are affected.
