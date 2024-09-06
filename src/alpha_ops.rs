@@ -11,7 +11,7 @@ where
     Container: DerefMut<Target = [P::Subpixel]> + AsRef<[<P as Pixel>::Subpixel]>
 {
     /**
-    Get the alpha channel of this image as a grayscale with the same number of channels as the input image. (i.e a 3 channel rgb image will return a 3 channel rgb grayscale image)
+    Get the alpha channel of this image as a grayscale with the same number of channels as the input image. (i.e a 4 channel rgba image will return a 3 channel rgba grayscale image)
 
     The alpha channel of the returned image is set to the maximum value of the input type.
 
