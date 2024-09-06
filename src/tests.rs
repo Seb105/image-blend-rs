@@ -4,11 +4,9 @@ mod test {
     use std::iter;
 
     use crate::{
-        pixelops::{
-            pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter,
-            pixel_mult, pixel_overlay, pixel_screen, pixel_soft_light, pixel_sub,
-        }, enums::{ColorStructure, ColorString},
-        DynamicChops
+        enums::{ColorString, ColorStructure}, pixelops::{
+            pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter, pixel_mult, pixel_overlay, pixel_normal, pixel_screen, pixel_soft_light, pixel_sub
+        }, DynamicChops
     };
     const EXPORT_ALL: bool = false;
     use image::{open, DynamicImage};
@@ -55,6 +53,7 @@ mod test {
             ("overlay", pixel_overlay),
             ("hard_light", pixel_hard_light),
             ("soft_light", pixel_soft_light),
+            ("overwrite", pixel_normal),
         ]
     }
     #[test]
