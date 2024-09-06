@@ -3,6 +3,8 @@ This module contains functions for performing pixel operations.
 
 All arguments and returns are f64 values in the range 0.0..1.0.
 
+`a` is self, `b` is the other pixel.
+
 Returns are not bounded in these functions, but are clamped to 0.0..1.0 before being converted back to the input type in the blend trait.
 
 Formulas taken from [Wikipedia](https://en.wikipedia.org/wiki/Blend_modes).
@@ -31,43 +33,59 @@ img1_buffer.save("tests_out/doctest_buffer_blend_result.png").unwrap();
 ```
 */
 
-
-#[must_use] 
+/// Adds `a` to `b`.
+#[must_use]
 pub fn pixel_add(a: f64, b: f64) -> f64 {
     a + b
 }
-#[must_use] 
+
+/// Subtracts `b` from `a`.
+#[must_use]
 pub fn pixel_sub(a: f64, b: f64) -> f64 {
     a - b
 }
-#[must_use] 
+
+/// Divides `a` by `b`. If `b` is 0, returns 1.
+#[must_use]
 pub fn pixel_div(a: f64, b: f64) -> f64 {
     if b == 0. {
-        return 1.
+        return 1.;
     }
     a / b
 }
-#[must_use] 
+
+/// Returns the darker value between `a` and `b`.
+#[must_use]
 pub fn pixel_darker(a: f64, b: f64) -> f64 {
     a.min(b)
 }
+
+/// Returns the lighter value between `a` and `b`.
 #[must_use]
 pub fn pixel_lighter(a: f64, b: f64) -> f64 {
     a.max(b)
 }
-#[must_use] 
+
+/// Returns the absolute difference between `a` and `b`.
+#[must_use]
 pub fn pixel_diff(a: f64, b: f64) -> f64 {
     (a - b).abs()
 }
+
+/// Multiplies `a` by `b`.
 #[must_use]
 pub fn pixel_mult(a: f64, b: f64) -> f64 {
     a * b
 }
-#[must_use] 
+
+/// Applies the screen blend mode to `a` and `b`.
+#[must_use]
 pub fn pixel_screen(a: f64, b: f64) -> f64 {
     1.0 - (1.0 - a) * (1.0 - b)
 }
-#[must_use] 
+
+/// Applies the overlay blend mode to `a` and `b`.
+#[must_use]
 pub fn pixel_overlay(a: f64, b: f64) -> f64 {
     if a < 0.5 {
         2.0 * a * b
@@ -75,7 +93,9 @@ pub fn pixel_overlay(a: f64, b: f64) -> f64 {
         1.0 - 2.0 * (1.0 - a) * (1.0 - b)
     }
 }
-#[must_use] 
+
+/// Applies the hard light blend mode to `a` and `b`.
+#[must_use]
 pub fn pixel_hard_light(a: f64, b: f64) -> f64 {
     if b < 0.5 {
         2.0 * a * b
@@ -83,7 +103,9 @@ pub fn pixel_hard_light(a: f64, b: f64) -> f64 {
         1.0 - 2.0 * (1.0 - a) * (1.0 - b)
     }
 }
-#[must_use] 
+
+/// Applies the soft light blend mode to `a` and `b`.
+#[must_use]
 pub fn pixel_soft_light(a: f64, b: f64) -> f64 {
     if b <= 0.5 {
         a - (1.0 - 2.0 * b) * a * (1.0 - a)
@@ -95,4 +117,10 @@ pub fn pixel_soft_light(a: f64, b: f64) -> f64 {
         };
         a + (2.0 * b - 1.0) * (gwc3 - a)
     }
+}
+
+/// Returns `b`.
+#[must_use]
+pub fn pixel_paste(_a: f64, b: f64) -> f64 {
+    b
 }
