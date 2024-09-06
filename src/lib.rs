@@ -1,5 +1,5 @@
 #![warn(clippy::pedantic)]
-/** 
+/*!
 
 # image-blend
 ### Library to perform blending and alpha channel operations using the image crate
@@ -162,15 +162,16 @@ img1_dynamic.save("tests_out/doctest_dynamic_custom_result.png").unwrap();
 
 ```
 */
-pub mod blend_ops;
-pub mod dynamic_blend;
-// pub mod helpers;
+pub(crate) mod blend_ops;
+pub(crate) mod dynamic_blend;
+pub(crate) mod alpha_ops;
+
 mod enums;
 mod error;
-pub use error::Error;
-pub mod alpha_ops;
-pub mod pixelops;
 mod tests;
+
+pub use error::Error;
+pub mod pixelops;
 pub use alpha_ops::BufferGetAlpha;
 pub use alpha_ops::BufferSetAlpha;
 pub use alpha_ops::BufferStripAlpha;

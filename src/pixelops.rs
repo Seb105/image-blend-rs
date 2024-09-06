@@ -1,5 +1,5 @@
 /*!
-This module contains functions for performing pixel operations.
+This module contains functions for common blending operations on pixel values, such as addition, subtraction, multiplication, etc.
 
 All arguments and returns are f64 values in the range 0.0..1.0.
 
