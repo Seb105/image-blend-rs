@@ -1,6 +1,6 @@
 [package]
 name = "image-blend"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["Seb Smith"]
 description = "Type-agnostic support for image blending operations (add, multiply, screen, etc) for the image crate. Support for custom blends and utils for alpha channel manipulation."
