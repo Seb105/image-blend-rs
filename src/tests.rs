@@ -5,7 +5,7 @@ mod test {
 
     use crate::{
         enums::{ColorString, ColorStructure}, pixelops::{
-            pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter, pixel_mult, pixel_overlay, pixel_normal, pixel_screen, pixel_soft_light, pixel_sub
+            pixel_add, pixel_darker, pixel_diff, pixel_div, pixel_hard_light, pixel_lighter, pixel_mult, pixel_normal, pixel_overlay, pixel_screen, pixel_soft_light, pixel_sub
         }, DynamicChops
     };
     const EXPORT_ALL: bool = false;
@@ -159,6 +159,12 @@ mod test {
         img1_transplant_alpha
             .save("tests_out/alpha_transplant_alpha.png")
             .unwrap();
+
+        let mut img2_strip_alpha = img2.clone();
+        img2_strip_alpha.strip_alpha().unwrap();
+        img2_strip_alpha
+            .save("tests_out/alpha_strip_alpha.png")
+            .unwrap();
     }
     #[test]
     fn test_alpha_getters_n_setters_dynamics() {
@@ -206,6 +212,13 @@ mod test {
             }
             DynamicImage::ImageRgba8(a_alpha.into_rgba8()).save(format!(
                 "tests_out/alpha_alltypes_{color_a}_alpha.png",
+            )).unwrap();
+
+            let mut a_strip_alpha: DynamicImage = a.clone();
+            a_strip_alpha.strip_alpha().unwrap();
+
+            DynamicImage::ImageRgba8(a_strip_alpha.into_rgba8()).save(format!(
+                "tests_out/alpha_alltypes_{color_a}_strip_alpha.png",
             )).unwrap();
         });
     }

@@ -10,5 +10,6 @@ pub mod pixelops;
 mod tests;
 pub use alpha_ops::BufferGetAlpha;
 pub use alpha_ops::BufferSetAlpha;
+pub use alpha_ops::BufferStripAlpha;
 pub use blend_ops::BufferBlend;
 pub use dynamic_blend::DynamicChops;

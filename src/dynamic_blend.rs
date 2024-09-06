@@ -2,7 +2,7 @@ use std::ops::DerefMut;
 
 use image::{ColorType, DynamicImage, ImageBuffer, Pixel};
 
-use crate::{BufferBlend, BufferGetAlpha, BufferSetAlpha, Error};
+use crate::{BufferBlend, BufferGetAlpha, BufferSetAlpha, BufferStripAlpha, Error};
 
 pub trait DynamicChops {
     /**
@@ -188,6 +188,32 @@ pub trait DynamicChops {
         &mut self,
         other: &Self
     ) -> Result<(), Error> where Self: std::marker::Sized;
+
+    /**
+    Remove this images alpha channel by setting it to the maximum value for every pixel.
+
+    Does not modify the underlying type.
+
+
+    # Errors
+    `NoAlphaChannel`: `self` or `other` does not have an alpha channel
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::{DynamicChops};
+
+    // Load an image and remove its alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    img2_dynamic.strip_alpha().unwrap();
+    img2_dynamic.save("tests_out/doctest_dynamic_stripalpha_result.png").unwrap();
+    ```
+    */
+    fn strip_alpha(
+        &mut self
+    ) -> Result<(), Error> where Self: std::marker::Sized;
 }
 impl DynamicChops for DynamicImage {
     fn blend (
@@ -270,13 +296,31 @@ impl DynamicChops for DynamicImage {
         }?;
         Ok(())
     }
+    fn strip_alpha(
+            &mut self
+        ) -> Result<(), Error> where Self: std::marker::Sized {
+        match self.color() {
+            ColorType::L8 => self.as_mut_luma8().unwrap().strip_alpha(),
+            ColorType::La8 => self.as_mut_luma_alpha8().unwrap().strip_alpha(),
+            ColorType::Rgb8 => self.as_mut_rgb8().unwrap().strip_alpha(),
+            ColorType::Rgba8 => self.as_mut_rgba8().unwrap().strip_alpha(),
+            ColorType::L16 => self.as_mut_luma16().unwrap().strip_alpha(),
+            ColorType::La16 => self.as_mut_luma_alpha16().unwrap().strip_alpha(),
+            ColorType::Rgb16 => self.as_mut_rgb16().unwrap().strip_alpha(),
+            ColorType::Rgba16 => self.as_mut_rgba16().unwrap().strip_alpha(),
+            ColorType::Rgb32F => self.as_mut_rgb32f().unwrap().strip_alpha(),
+            ColorType::Rgba32F => self.as_mut_rgba32f().unwrap().strip_alpha(),
+            _ => Err(Error::UnsupportedType),
+        }?;
+        Ok(())
+    }
 }
 fn blend_step_a<Pmut, ContainerMut>(subject: &mut ImageBuffer<Pmut, ContainerMut>, other: &DynamicImage, op: fn(f64, f64) -> f64, apply_to_color: bool, apply_to_alpha: bool) -> Result<(), Error>
 where 
     Pmut: Pixel,
     ContainerMut: DerefMut<Target = [Pmut::Subpixel]>
     + DerefMut<Target = [Pmut::Subpixel]>
-    + AsMut<[<Pmut as Pixel>::Subpixel]>,
+    + AsMut<[<Pmut as Pixel>::Subpixel]>
 {
     match other.color() {
         ColorType::L8 => subject.blend(other.as_luma8().unwrap(), op, apply_to_color, apply_to_alpha),
@@ -306,7 +350,7 @@ where
     Pmut: Pixel,
     ContainerMut: DerefMut<Target = [Pmut::Subpixel]>
     + DerefMut<Target = [Pmut::Subpixel]>
-    + AsMut<[<Pmut as Pixel>::Subpixel]>,
+    + AsMut<[<Pmut as Pixel>::Subpixel]>
 {
     match other.color() {
         ColorType::L8 => subject.set_alpha(other.as_luma8().unwrap()),

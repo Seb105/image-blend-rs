@@ -1,7 +1,7 @@
 use std::{iter::zip, ops::{Deref, DerefMut}};
 
 use image::{ImageBuffer, Pixel};
-use num_traits::NumCast;
+use num_traits::{Bounded, NumCast};
 
 use crate::{blend_ops::{dims_match, type_max}, enums::ColorStructure, error::Error};
 
@@ -158,7 +158,7 @@ where
     Container: Deref<Target = [P::Subpixel]> + AsRef<[<P as Pixel>::Subpixel]>,
     ContainerMut: DerefMut<Target = [Pmut::Subpixel]>
         + DerefMut<Target = [Pmut::Subpixel]>
-        + AsMut<[<Pmut as Pixel>::Subpixel]>,
+        + AsMut<[<Pmut as Pixel>::Subpixel]>
 {
     fn set_alpha(
         &mut self,
@@ -198,6 +198,58 @@ where
             let float_b: f64 = <f64 as NumCast>::from(pxb.channels()[alpha_b]).unwrap() / b_max;
             let alpha: <Pmut as Pixel>::Subpixel = NumCast::from(float_b * a_max).unwrap();
             pxa.channels_mut()[alpha_a] = alpha;
+        });
+        Ok(())
+    }
+}
+pub trait BufferStripAlpha<Pmut, ContainerMut> 
+where 
+    Pmut: Pixel, 
+    ContainerMut: DerefMut<Target = [Pmut::Subpixel]> 
+        + AsMut<[<Pmut as Pixel>::Subpixel]> 
+        
+{
+    /**
+    Remove this images alpha channel by setting it to the maximum value for every pixel.
+
+    Does not modify the underlying type.
+
+
+    # Errors
+    `NoAlphaChannel`: `self` or `other` does not have an alpha channel
+
+
+    # Examples
+
+    ```
+    use image::open;
+    use image_blend::{BufferStripAlpha};
+
+    // Load an image and remove its alpha channel
+    let mut img2_dynamic = open("test_data/2.png").unwrap();
+    let mut img2_buffer = img2_dynamic.to_rgba16();
+    img2_buffer.strip_alpha().unwrap();
+    img2_buffer.save("tests_out/doctest_buffer_stripalpha_result.png").unwrap();
+    ```
+    */
+    fn strip_alpha(
+        &mut self
+    ) -> Result<(), Error>;
+}
+impl <Pmut, ContainerMut> BufferStripAlpha<Pmut, ContainerMut> for ImageBuffer<Pmut, ContainerMut>
+where 
+    Pmut: Pixel, 
+    ContainerMut: DerefMut<Target = [Pmut::Subpixel]> 
+        + AsMut<[<Pmut as Pixel>::Subpixel]> 
+{
+    fn strip_alpha(
+            &mut self
+    ) -> Result<(), Error> {
+        let structure: ColorStructure = self.sample_layout().try_into()?;
+        let alpha_channel = structure.alpha_channel().ok_or(Error::NoAlphaChannel)?;
+        let max = <Pmut as Pixel>::Subpixel::max_value();
+        self.pixels_mut().for_each(|px| {
+            px.channels_mut()[alpha_channel] = max;
         });
         Ok(())
     }
