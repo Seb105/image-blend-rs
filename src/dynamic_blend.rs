@@ -10,9 +10,7 @@ pub trait DynamicChops {
 
     Handles type conversion and alpha channel detection and placement automatically.
 
-    If `other` has an alpha channel, it will be used to weight the blending of the color channels. If there is no alpha channel, the blending will be unweighted.
-
-    You may blend a luma image into an rgba image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
+    You may blend a luma image into an rgb image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
 
     If `other` has an alpha channel, the output is weighted by this alpha channel (so if alpha for `other` for this pixel is 0.5, the blend effect will be 0.5 as strong)
 
@@ -20,7 +18,7 @@ pub trait DynamicChops {
 
     Use `apply_to_color` and `apply_to_alpha` to control which channels are affected.
 
-    If `apply_to_alpha` is true but `self` or `other` does not have an alpha channel, nothing will happen.
+    If `apply_to_alpha` is true but `self` or `other` does not have an alpha channel, this option has no effect.
 
     `op` is a function that takes two f64 values and returns a f64 value. (e.g. `|self, other| self + other`)
 
@@ -95,7 +93,7 @@ pub trait DynamicChops {
         apply_to_alpha: bool,
     ) -> Result<(), Error>;
     /**
-    Get the alpha channel of this image as a grayscale with the same number of channels as the input image. (i.e a 4 channel rgba image will return a 3 channel rgba grayscale image)
+    Get the alpha channel of this image as a grayscale with the same number of channels as the input image. (i.e a 4 channel rgba image will return a 4 channel rgba grayscale image with the alpha channel set to the maximum value of the input type)
 
     The alpha channel of the returned image is set to the maximum value of the input type.
 
@@ -158,7 +156,7 @@ pub trait DynamicChops {
 
     Handles type conversion and alpha channel detection and placement automatically.
 
-    WARNING: `other` can be of any type, but only the first channel will be used to set the alpha channel.
+    WARNING: `other` can be of any type, but only the first channel will be used to set the alpha channel. In a grayscale image this will be the luma channel, in an rgb image the red channel. Consider converting to grayscale if this matters.
 
     # Errors
     `NoAlphaChannel`: `self` does not have an alpha channel
@@ -196,7 +194,7 @@ pub trait DynamicChops {
 
 
     # Errors
-    `NoAlphaChannel`: `self` or `other` does not have an alpha channel
+    `NoAlphaChannel`: `self` does not have an alpha channel
 
 
     # Examples

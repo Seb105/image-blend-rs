@@ -85,7 +85,7 @@ where
 
     Handles type conversion and alpha channel detection and placement automatically.
 
-    WARNING: `other` can be of any type, but only the first channel will be used to set the alpha channel.
+    WARNING: `other` can be of any type, but only the first channel will be used to set the alpha channel. In a grayscale image this will be the luma channel, in an rgb image the red channel. Consider converting to grayscale if this matters. In a grayscale image this will be the luma channel, in an rgb image the red channel.
 
     # Errors
     `NoAlphaChannel`: `self` does not have an alpha channel
@@ -216,7 +216,7 @@ where
 
 
     # Errors
-    `NoAlphaChannel`: `self` or `other` does not have an alpha channel
+    `NoAlphaChannel`: `self` does not have an alpha channel
 
 
     # Examples

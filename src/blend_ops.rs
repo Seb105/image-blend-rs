@@ -27,10 +27,9 @@ where
     Blend `other` into `self` using the function `op`, where arg 0 is self and 1 is other.
 
     Handles type conversion and alpha channel detection and placement automatically.
+    
 
-    If `other` has an alpha channel, it will be used to weight the blending of the color channels. If there is no alpha channel, the blending will be unweighted.
-
-    You may blend a luma image into an rgba image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
+    You may blend a luma image into an rgb image (in which case the luma image will be treated as a grayscale rgb image), but you cannot blend an rgba image into a luma image.
 
     If `other` has an alpha channel, the output is weighted by this alpha channel (so if alpha for `other` for this pixel is 0.5, the blend effect will be 0.5 as strong)
 
@@ -38,7 +37,7 @@ where
 
     Use `apply_to_color` and `apply_to_alpha` to control which channels are affected.
 
-    If `apply_to_alpha` is true but `self` or `other` does not have an alpha channel, nothing will happen.
+    If `apply_to_alpha` is true but `self` or `other` does not have an alpha channel, this option has no effect.
 
     `op` is a function that takes two f64 values and returns a f64 value. (e.g. `|self, other| self + other`)
 
