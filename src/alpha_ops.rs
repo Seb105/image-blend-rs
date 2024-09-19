@@ -135,7 +135,7 @@ where
     use image::open;
     use image_blend::{BufferGetAlpha, BufferSetAlpha};
 
-    // Load an image and get its alpha channel
+    // Load an image that has an alpha channel
     let img1_dynamic = open("test_data/1.png").unwrap();
     let img1_buffer = img1_dynamic.as_rgba8().unwrap();
 

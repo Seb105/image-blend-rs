@@ -59,7 +59,7 @@ img2_dynamic.save("tests_out/doctest_dynamic_getalpha_result.png").unwrap();
 use image::open;
 use image_blend::DynamicChops;
 
-// Load an image and get its alpha channel
+// Load an image that has an alpha channel
 let img1_dynamic = open("test_data/1.png").unwrap();
 
 // Load another image and set its alpha channel to a copy of the first image's alpha channel.
